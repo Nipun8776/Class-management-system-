@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paper Class System (Final Fixed)</title>
+    <title>Paper Class App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { overflow-x: hidden; touch-action: pan-y; -webkit-overflow-scrolling: touch; font-family: 'Inter', sans-serif; }
-        
-        /* Force correct display on load */
-        #home { display: block; }
         .section-tab { display: none; }
         .section-tab.active { display: block; animation: slideUp 0.3s ease-out; }
-        
         @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         
         #stats-sidebar { transition: transform 0.3s ease-in-out; }
@@ -24,20 +20,46 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
         
         .noselect { -webkit-user-select: none; user-select: none; }
-        
+        input[type="date"] { position: relative; }
+        input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
         input[type="time"] { font-family: 'Courier New', monospace; cursor: pointer; }
         input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.5); }
+
+        /* TOAST NOTIFICATION STYLES */
+        #toast-box {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center;
+            border-radius: 50px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px;
+            transform: translateX(-50%); font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast-box.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #toast-box.success { background-color: #10B981; } /* Emerald */
+        #toast-box.error { background-color: #EF4444; }   /* Red */
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800">
+
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-500 text-xl mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Are you sure?</h3>
+            <p class="text-xs text-slate-500 mb-6 font-medium">This action cannot be undone.</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal(false)" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition">Cancel</button>
+                <button id="modal-confirm-btn" class="flex-1 py-3 rounded-xl bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-200 transition">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-box">Notification</div>
 
     <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
         <div class="max-w-2xl mx-auto px-4">
             <div class="flex justify-between items-center h-14">
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleSidebar()" class="p-2 hover:bg-slate-100 rounded-full transition text-slate-600">
-                        <i class="fas fa-bars text-lg"></i>
-                    </button>
+                    <button onclick="toggleSidebar()" class="p-2 hover:bg-slate-100 rounded-full transition text-slate-600"><i class="fas fa-bars text-lg"></i></button>
                     <div class="leading-tight">
                         <span class="block text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider">PAPER CLASS</span>
                         <span class="block text-[9px] font-semibold text-slate-400 uppercase">MANAGEMENT SYSTEM</span>
@@ -70,12 +92,11 @@
         </div>
         <div class="p-6 border-t border-slate-100 bg-slate-50 space-y-3">
              <button onclick="downloadCSV()" class="w-full py-3 rounded-xl bg-white border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 shadow-sm hover:border-emerald-200 hover:text-emerald-600 transition"><i class="fas fa-download mr-2"></i> Export CSV</button>
-            <button onclick="hardReset()" class="w-full py-3 text-[9px] font-bold text-red-400 hover:text-red-600 uppercase tracking-widest transition">Reset System</button>
+            <button onclick="requestHardReset()" class="w-full py-3 text-[9px] font-bold text-red-400 hover:text-red-600 uppercase tracking-widest transition">Reset System</button>
         </div>
     </div>
 
     <main class="max-w-2xl mx-auto px-4 py-6">
-        
         <section id="home" class="section-tab active">
             <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-slate-100 min-h-[50vh] flex flex-col items-center justify-center">
                 <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 text-2xl mb-6 shadow-inner"><i class="fas fa-search"></i></div>
@@ -170,23 +191,69 @@
         let attendance = JSON.parse(localStorage.getItem('attendance')) || [];
         let isNewestFirst = true;
         let clickTrackers = {}; 
+        let pendingDeleteId = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('attendPicker').value = today;
             document.getElementById('statsDate').value = today;
-            
             updateStats();
             renderStatsPage();
-            
             // --- FIX: Force Home Tab to be Active & others hidden ---
-            document.getElementById('home').style.display = "block";
-            ['reg', 'attend', 'list', 'stats'].forEach(id => {
-                document.getElementById(id).style.display = "none";
-            });
-            updateNavStyles('home');
+            switchTab('home'); 
         });
 
+        // --- TOAST & MODAL SYSTEM ---
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast-box');
+            toast.innerText = msg;
+            toast.className = type; 
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function requestDeleteStudent(id) {
+            pendingDeleteId = id;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-confirm-btn').onclick = function() {
+                executeDeleteStudent();
+            };
+        }
+
+        function requestHardReset() {
+            pendingDeleteId = 'RESET';
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-confirm-btn').onclick = function() {
+                executeHardReset();
+            };
+        }
+
+        function closeModal(val) {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            pendingDeleteId = null;
+        }
+
+        function executeDeleteStudent() {
+            if (pendingDeleteId && pendingDeleteId !== 'RESET') {
+                students = students.filter(s => s.id != pendingDeleteId);
+                attendance = attendance.filter(a => a.studentId != pendingDeleteId);
+                localStorage.setItem('students', JSON.stringify(students));
+                localStorage.setItem('attendance', JSON.stringify(attendance));
+                renderFullList(); updateStats();
+                showToast("Student Deleted", "success");
+            }
+            closeModal();
+        }
+
+        function executeHardReset() {
+            if (pendingDeleteId === 'RESET') {
+                localStorage.clear();
+                location.reload();
+            }
+            closeModal();
+        }
+
+        // --- NAVIGATION ---
         function updateNavStyles(activeId) {
             ['btn-home', 'btn-reg', 'btn-attend', 'btn-list'].forEach(id => {
                 const btn = document.getElementById(id);
@@ -209,22 +276,11 @@
         }
 
         function switchTab(id) {
-            // Force Hide All
-            document.querySelectorAll('section.section-tab').forEach(s => {
-                s.style.display = 'none'; 
-                s.classList.remove('active');
-            });
-            
-            // Show Active
+            document.querySelectorAll('section.section-tab').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
             const target = document.getElementById(id);
-            if(target) {
-                target.style.display = 'block';
-                setTimeout(() => target.classList.add('active'), 10); // Trigger anim
-            }
-
+            if(target) { target.style.display = 'block'; setTimeout(() => target.classList.add('active'), 10); }
             window.scrollTo({ top: 0, behavior: 'smooth' });
             updateNavStyles(id);
-            
             if(id === 'list') renderFullList();
             if(id === 'attend') renderAttendanceList();
             if(id === 'stats') renderStatsPage();
@@ -236,7 +292,6 @@
             renderFullList();
         }
 
-        // --- STATISTICS ---
         function renderStatsPage() {
             const rawDate = document.getElementById('statsDate').value;
             const selectedDate = rawDate ? new Date(rawDate.split('-')[0], rawDate.split('-')[1]-1, rawDate.split('-')[2]).toLocaleDateString() : new Date().toLocaleDateString();
@@ -263,8 +318,8 @@
             const id = document.getElementById('regId').value;
             const name = document.getElementById('regName').value;
             const batch = document.getElementById('regBatch').value;
-            if(!id || id.length != 8 || !name) return alert("Please enter valid ID (8 digits) and Name.");
-            if(students.some(s => s.dmId === id)) return alert("This ID is already registered.");
+            if(!id || id.length != 8 || !name) { showToast("Invalid Input", "error"); return; }
+            if(students.some(s => s.dmId === id)) { showToast("ID Already Exists", "error"); return; }
             
             const now = new Date();
             const regDate = now.toLocaleDateString();
@@ -272,7 +327,7 @@
             
             students.push({ id: Date.now(), dmId: id, name: name.toUpperCase(), batch, regDate, regTime });
             localStorage.setItem('students', JSON.stringify(students));
-            alert("Student Registered Successfully!");
+            showToast("Registered Successfully", "success");
             document.getElementById('regId').value = ''; document.getElementById('regName').value = '';
             updateStats();
         }
@@ -292,7 +347,7 @@
             }
         }
 
-        // --- RESET ON NAME TAP ---
+        // --- NAME CLICK RESET ---
         function tryResetAttendance(studentId, selectedDate) {
             if (!clickTrackers[studentId]) clickTrackers[studentId] = { count: 0, timer: null };
             clickTrackers[studentId].count++;
@@ -306,6 +361,7 @@
                     localStorage.setItem('attendance', JSON.stringify(attendance));
                     renderAttendanceList();
                     clickTrackers[studentId].count = 0;
+                    showToast("Record Reset", "success");
                 }
             }
         }
@@ -364,7 +420,7 @@
             });
             
             if(list.length === 0) {
-                container.innerHTML = '<div class="text-center py-12 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No Students Found</div>';
+                container.innerHTML = '<div class="text-center py-12 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No Students</div>';
                 return;
             }
 
@@ -460,21 +516,12 @@
                             <p class="text-[8px] font-mono text-slate-400">${s.dmId}</p>
                         </div>
                     </div>
-                    <button onclick="deleteStudent(${s.id})" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"><i class="fas fa-trash-alt text-xs"></i></button>
+                    <button onclick="requestDeleteStudent(${s.id})" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"><i class="fas fa-trash-alt text-xs"></i></button>
                 </div>`).join('');
         }
 
-        function deleteStudent(id) {
-            if(confirm("Permanently delete this student?")) {
-                students = students.filter(s => s.id != id);
-                attendance = attendance.filter(a => a.studentId != id);
-                localStorage.setItem('students', JSON.stringify(students));
-                localStorage.setItem('attendance', JSON.stringify(attendance));
-                renderFullList(); updateStats();
-            }
-        }
         function downloadCSV() {
-            if(students.length === 0) return alert("No data to export!");
+            if(students.length === 0) return showToast("No Data to Export", "error");
             let csvContent = "data:text/csv;charset=utf-8,ID,Name,Batch,RegDate\n";
             students.forEach(s => csvContent += `${s.dmId},${s.name},${s.batch},${s.regDate}\n`);
             const encodedUri = encodeURI(csvContent);
@@ -484,12 +531,6 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        }
-        function hardReset() {
-            if(confirm("WARNING: ALL DATA WILL BE WIPED!")) {
-                localStorage.clear();
-                location.reload();
-            }
         }
     </script>
 </body>
