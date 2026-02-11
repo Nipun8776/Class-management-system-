@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paper Class App</title>
+    <title>Paper Class System (Final)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { overflow-x: hidden; touch-action: pan-y; -webkit-overflow-scrolling: touch; font-family: 'Inter', sans-serif; }
+        
+        /* Force correct display on load */
+        #home { display: block; }
         .section-tab { display: none; }
         .section-tab.active { display: block; animation: slideUp 0.3s ease-out; }
+        
         @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         
         #stats-sidebar { transition: transform 0.3s ease-in-out; }
@@ -20,12 +24,11 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
         
         .noselect { -webkit-user-select: none; user-select: none; }
-        input[type="date"] { position: relative; }
-        input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        
         input[type="time"] { font-family: 'Courier New', monospace; cursor: pointer; }
         input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.5); }
 
-        /* TOAST NOTIFICATION STYLES */
+        /* Toast Notification */
         #toast-box {
             visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center;
             border-radius: 50px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px;
@@ -33,8 +36,8 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
         }
         #toast-box.show { visibility: visible; opacity: 1; bottom: 50px; }
-        #toast-box.success { background-color: #10B981; } /* Emerald */
-        #toast-box.error { background-color: #EF4444; }   /* Red */
+        #toast-box.success { background-color: #10B981; }
+        #toast-box.error { background-color: #EF4444; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800">
@@ -45,14 +48,12 @@
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
             <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Are you sure?</h3>
-            <p class="text-xs text-slate-500 mb-6 font-medium">This action cannot be undone.</p>
-            <div class="flex gap-3">
-                <button onclick="closeModal(false)" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition">Cancel</button>
-                <button id="modal-confirm-btn" class="flex-1 py-3 rounded-xl bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-200 transition">Yes, Delete</button>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-bold uppercase hover:bg-slate-200 transition">Cancel</button>
+                <button id="modal-confirm-btn" class="flex-1 py-3 rounded-xl bg-red-500 text-white text-[10px] font-bold uppercase hover:bg-red-600 shadow-lg transition">Yes, Do it</button>
             </div>
         </div>
     </div>
-
     <div id="toast-box">Notification</div>
 
     <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
@@ -97,20 +98,50 @@
     </div>
 
     <main class="max-w-2xl mx-auto px-4 py-6">
+        
         <section id="home" class="section-tab active">
-            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-slate-100 min-h-[50vh] flex flex-col items-center justify-center">
-                <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 text-2xl mb-6 shadow-inner"><i class="fas fa-search"></i></div>
-                <h2 class="text-sm font-black uppercase tracking-widest text-slate-800 mb-2">Student Lookup</h2>
-                <div class="w-full max-w-xs relative">
-                    <input id="searchId" type="tel" maxlength="8" placeholder="Enter ID..." class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-center text-lg font-bold tracking-[0.2em] text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition shadow-sm placeholder:text-slate-300">
-                    <button onclick="lookupStudent()" class="absolute right-2 top-2 bottom-2 aspect-square bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow-md active:scale-95"><i class="fas fa-arrow-right"></i></button>
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-slate-100 min-h-[60vh] flex flex-col items-center justify-center">
+                
+                <div id="searchBoxContainer" class="w-full flex flex-col items-center justify-center transition-all duration-300">
+                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 text-2xl mb-6 shadow-inner"><i class="fas fa-search"></i></div>
+                    <h2 class="text-sm font-black uppercase tracking-widest text-slate-800 mb-2">Student Lookup</h2>
+                    <p class="text-[10px] text-slate-400 mb-8 font-medium">Enter 8-digit DM Barcode</p>
+                    <div class="w-full max-w-xs relative">
+                        <input id="searchId" type="tel" maxlength="8" placeholder="Enter ID..." class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-center text-lg font-bold tracking-[0.2em] text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition shadow-sm placeholder:text-slate-300">
+                        <button onclick="lookupStudent()" class="absolute right-2 top-2 bottom-2 aspect-square bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow-md active:scale-95"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                    <p id="searchError" class="hidden text-red-500 text-[10px] font-bold mt-4 animate-pulse"><i class="fas fa-exclamation-circle mr-1"></i> Student Not Found</p>
                 </div>
-                <p id="searchError" class="hidden text-red-500 text-[10px] font-bold mt-4 animate-pulse"><i class="fas fa-exclamation-circle mr-1"></i> Student Not Found</p>
-                <div id="studentProfile" class="hidden w-full max-w-xs mt-8 animate-fadeIn">
-                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center">
-                        <div class="w-12 h-12 bg-white rounded-full mx-auto flex items-center justify-center text-indigo-500 shadow-sm mb-3 text-lg font-bold border border-slate-100"><i class="fas fa-user"></i></div>
-                        <h3 id="resName" class="text-sm font-black text-slate-800 uppercase mb-1"></h3>
-                        <p id="resId" class="text-xs font-mono text-slate-400 tracking-widest"></p>
+
+                <div id="studentProfile" class="hidden w-full max-w-sm mt-0 animate-fadeIn">
+                    <button onclick="resetSearch()" class="mb-4 text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition"><i class="fas fa-arrow-left"></i> Back</button>
+                    
+                    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-20 bg-indigo-50"></div>
+                        <div class="relative flex flex-col items-center text-center mt-4">
+                            <div class="w-20 h-20 bg-white rounded-full p-1 shadow-md mb-3">
+                                <div class="w-full h-full bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-black uppercase" id="profileAvatar">A</div>
+                            </div>
+                            <h3 id="resName" class="text-lg font-black text-slate-800 uppercase leading-tight mb-1"></h3>
+                            <div class="flex gap-2 mb-6">
+                                <span id="resId" class="px-3 py-1 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500 tracking-wider"></span>
+                                <span id="resBatch" class="px-3 py-1 rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600 tracking-wider"></span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 w-full mb-4">
+                                <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                                    <p class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Present</p>
+                                    <p id="profilePresentCount" class="text-3xl font-black text-emerald-600">0</p>
+                                </div>
+                                <div class="bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                                    <p class="text-[9px] font-bold text-rose-400 uppercase tracking-widest mb-1">Absent</p>
+                                    <p id="profileAbsentCount" class="text-3xl font-black text-rose-600">0</p>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-50 p-3 rounded-xl flex justify-between items-center border border-slate-100">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase">Joined On</span>
+                                <span id="resRegDate" class="text-[10px] font-black text-slate-600"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,7 +149,7 @@
 
         <section id="reg" class="section-tab">
             <div class="bg-white rounded-3xl shadow-sm p-8 border border-slate-100">
-                <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 text-center">New Student Registration</h2>
+                <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 text-center">New Registration</h2>
                 <div class="flex flex-col gap-4 max-w-xs mx-auto">
                     <input id="regId" type="tel" maxlength="8" placeholder="DM Barcode (8-Digits)" class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs font-bold tracking-widest focus:border-indigo-500 focus:bg-white outline-none transition">
                     <input id="regName" type="text" placeholder="Full Name" class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs font-bold uppercase focus:border-indigo-500 focus:bg-white outline-none transition">
@@ -197,61 +228,12 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('attendPicker').value = today;
             document.getElementById('statsDate').value = today;
+            
             updateStats();
             renderStatsPage();
-            // --- FIX: Force Home Tab to be Active & others hidden ---
+            // --- FORCE HOME TAB ON LOAD ---
             switchTab('home'); 
         });
-
-        // --- TOAST & MODAL SYSTEM ---
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast-box');
-            toast.innerText = msg;
-            toast.className = type; 
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 3000);
-        }
-
-        function requestDeleteStudent(id) {
-            pendingDeleteId = id;
-            document.getElementById('confirm-modal').classList.remove('hidden');
-            document.getElementById('modal-confirm-btn').onclick = function() {
-                executeDeleteStudent();
-            };
-        }
-
-        function requestHardReset() {
-            pendingDeleteId = 'RESET';
-            document.getElementById('confirm-modal').classList.remove('hidden');
-            document.getElementById('modal-confirm-btn').onclick = function() {
-                executeHardReset();
-            };
-        }
-
-        function closeModal(val) {
-            document.getElementById('confirm-modal').classList.add('hidden');
-            pendingDeleteId = null;
-        }
-
-        function executeDeleteStudent() {
-            if (pendingDeleteId && pendingDeleteId !== 'RESET') {
-                students = students.filter(s => s.id != pendingDeleteId);
-                attendance = attendance.filter(a => a.studentId != pendingDeleteId);
-                localStorage.setItem('students', JSON.stringify(students));
-                localStorage.setItem('attendance', JSON.stringify(attendance));
-                renderFullList(); updateStats();
-                showToast("Student Deleted", "success");
-            }
-            closeModal();
-        }
-
-        function executeHardReset() {
-            if (pendingDeleteId === 'RESET') {
-                localStorage.clear();
-                location.reload();
-            }
-            closeModal();
-        }
 
         // --- NAVIGATION ---
         function updateNavStyles(activeId) {
@@ -276,11 +258,20 @@
         }
 
         function switchTab(id) {
-            document.querySelectorAll('section.section-tab').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
+            // Hide all tabs
+            document.querySelectorAll('section.section-tab').forEach(s => {
+                s.style.display = 'none'; 
+                s.classList.remove('active');
+            });
+            // Show target tab
             const target = document.getElementById(id);
-            if(target) { target.style.display = 'block'; setTimeout(() => target.classList.add('active'), 10); }
+            if(target) {
+                target.style.display = 'block';
+                setTimeout(() => target.classList.add('active'), 10);
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
             updateNavStyles(id);
+            
             if(id === 'list') renderFullList();
             if(id === 'attend') renderAttendanceList();
             if(id === 'stats') renderStatsPage();
@@ -292,34 +283,53 @@
             renderFullList();
         }
 
-        function renderStatsPage() {
-            const rawDate = document.getElementById('statsDate').value;
-            const selectedDate = rawDate ? new Date(rawDate.split('-')[0], rawDate.split('-')[1]-1, rawDate.split('-')[2]).toLocaleDateString() : new Date().toLocaleDateString();
-            const total = students.length;
-            let presentCount = 0;
-            let absentCount = 0;
-            attendance.forEach(record => {
-                if(record.date === selectedDate) {
-                    if(record.status === 'Present') presentCount++;
-                    if(record.status === 'Absent') absentCount++;
+        // --- TOAST & MODALS ---
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast-box');
+            toast.innerText = msg;
+            toast.className = type; toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function requestHardReset() {
+            pendingDeleteId = 'RESET';
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-confirm-btn').onclick = function() { executeHardReset(); };
+        }
+
+        function requestDeleteStudent(id) {
+            pendingDeleteId = id;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-confirm-btn').onclick = function() {
+                if (pendingDeleteId && pendingDeleteId !== 'RESET') {
+                    students = students.filter(s => s.id != pendingDeleteId);
+                    attendance = attendance.filter(a => a.studentId != pendingDeleteId);
+                    localStorage.setItem('students', JSON.stringify(students));
+                    localStorage.setItem('attendance', JSON.stringify(attendance));
+                    renderFullList(); updateStats();
+                    showToast("Deleted", "success");
                 }
-            });
-            document.getElementById('stat-page-total').innerText = total;
-            document.getElementById('stat-page-present').innerText = presentCount;
-            document.getElementById('stat-page-absent').innerText = absentCount;
+                closeModal();
+            };
         }
 
-        function updateStats() {
-            document.getElementById('stat-total').innerText = students.length;
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            pendingDeleteId = null;
         }
 
-        // --- DATA LOGIC ---
+        function executeHardReset() {
+            if (pendingDeleteId === 'RESET') { localStorage.clear(); location.reload(); }
+            closeModal();
+        }
+
+        // --- DATA FUNCTIONS ---
         function addStudent() {
             const id = document.getElementById('regId').value;
             const name = document.getElementById('regName').value;
             const batch = document.getElementById('regBatch').value;
-            if(!id || id.length != 8 || !name) { showToast("Invalid Input", "error"); return; }
-            if(students.some(s => s.dmId === id)) { showToast("ID Already Exists", "error"); return; }
+            if(!id || id.length != 8 || !name) return showToast("Invalid Input", "error");
+            if(students.some(s => s.dmId === id)) return showToast("ID Exists", "error");
             
             const now = new Date();
             const regDate = now.toLocaleDateString();
@@ -327,7 +337,7 @@
             
             students.push({ id: Date.now(), dmId: id, name: name.toUpperCase(), batch, regDate, regTime });
             localStorage.setItem('students', JSON.stringify(students));
-            showToast("Registered Successfully", "success");
+            showToast("Success", "success");
             document.getElementById('regId').value = ''; document.getElementById('regName').value = '';
             updateStats();
         }
@@ -336,18 +346,37 @@
             const idInput = document.getElementById('searchId');
             const s = students.find(x => x.dmId === idInput.value);
             const profile = document.getElementById('studentProfile');
-            const msg = document.getElementById('noUserMsg');
+            const searchBox = document.getElementById('searchBoxContainer');
             const err = document.getElementById('searchError');
+            
             if(s) {
-                profile.classList.remove('hidden'); msg.classList.add('hidden'); err.classList.add('hidden');
+                const presentCount = attendance.filter(a => a.studentId === s.id && a.status === 'Present').length;
+                const absentCount = attendance.filter(a => a.studentId === s.id && a.status === 'Absent').length;
+
+                searchBox.classList.add('hidden'); 
+                profile.classList.remove('hidden'); 
+                err.classList.add('hidden');
+
                 document.getElementById('resName').innerText = s.name;
-                document.getElementById('resId').innerText = s.dmId + " | " + s.batch;
+                document.getElementById('profileAvatar').innerText = s.name.charAt(0);
+                document.getElementById('resId').innerText = s.dmId;
+                document.getElementById('resBatch').innerText = s.batch + " Batch";
+                document.getElementById('resRegDate').innerText = s.regDate;
+                document.getElementById('profilePresentCount').innerText = presentCount;
+                document.getElementById('profileAbsentCount').innerText = absentCount;
             } else {
-                profile.classList.add('hidden'); msg.classList.add('hidden'); err.classList.remove('hidden');
+                profile.classList.add('hidden'); searchBox.classList.remove('hidden'); err.classList.remove('hidden');
             }
         }
 
-        // --- NAME CLICK RESET ---
+        function resetSearch() {
+            document.getElementById('studentProfile').classList.add('hidden');
+            document.getElementById('searchBoxContainer').classList.remove('hidden');
+            document.getElementById('searchId').value = '';
+            document.getElementById('searchError').classList.add('hidden');
+        }
+
+        // --- ATTENDANCE ---
         function tryResetAttendance(studentId, selectedDate) {
             if (!clickTrackers[studentId]) clickTrackers[studentId] = { count: 0, timer: null };
             clickTrackers[studentId].count++;
@@ -381,10 +410,7 @@
             const rawDate = document.getElementById('attendPicker').value;
             const selectedDate = rawDate ? new Date(rawDate.split('-')[0], rawDate.split('-')[1]-1, rawDate.split('-')[2]).toLocaleDateString() : new Date().toLocaleDateString();
             const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const time = `${hours}:${minutes}`;
-
+            const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             const idx = attendance.findIndex(a => a.studentId === studentId && a.date === selectedDate);
 
             if (type === 'absent') {
@@ -396,7 +422,6 @@
             } else if (type === 'out') {
                 if(idx > -1) { attendance[idx].outTime = time; }
             }
-
             localStorage.setItem('attendance', JSON.stringify(attendance));
             renderAttendanceList();
         }
@@ -409,7 +434,6 @@
             const selectedDate = rawDate ? new Date(rawDate.split('-')[0], rawDate.split('-')[1]-1, rawDate.split('-')[2]).toLocaleDateString() : new Date().toLocaleDateString();
 
             let list = students.filter(s => activeBatch === 'All' ? true : s.batch === activeBatch);
-
             list = list.filter(s => {
                 const record = attendance.find(a => a.studentId === s.id && a.date === selectedDate);
                 const status = record ? record.status : 'None';
@@ -420,7 +444,7 @@
             });
             
             if(list.length === 0) {
-                container.innerHTML = '<div class="text-center py-12 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No Students</div>';
+                container.innerHTML = '<div class="text-center py-12 text-slate-300 text-[10px] font-bold uppercase tracking-widest">No Records</div>';
                 return;
             }
 
@@ -429,31 +453,23 @@
                 const status = record ? record.status : null; 
                 const inTime = record ? record.inTime : '';
                 const outTime = record ? record.outTime : '';
-
                 let actionArea;
 
                 if (status === 'Absent') {
-                    // LOCKED: ABSENT STATE (RESET ON NAME)
-                    actionArea = `
-                        <div class="px-3 py-2 rounded-xl bg-rose-50 border border-rose-100 text-rose-500 flex flex-col items-center justify-center transition active:scale-95 w-24">
-                            <span class="text-[10px] font-black uppercase tracking-widest"><i class="fas fa-times-circle mr-1"></i> ABSENT</span>
-                        </div>`;
+                    // LOCKED: ABSENT STATE
+                    actionArea = `<div class="px-3 py-2 rounded-xl bg-rose-50 border border-rose-100 text-rose-500 flex flex-col items-center justify-center w-24 transition active:scale-95"><span class="text-[10px] font-black uppercase tracking-widest"><i class="fas fa-times-circle mr-1"></i> ABSENT</span></div>`;
                 } else if (status === 'Present') {
                     // LOCKED: PRESENT STATE
                     if (!outTime) {
-                        // MARKED IN -> SHOW OUT BUTTON
                         actionArea = `
                             <div class="flex items-center gap-2">
                                 <div class="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex flex-col items-center min-w-[50px]">
                                     <span class="text-[6px] font-bold uppercase text-emerald-400">IN</span>
                                     <input type="time" value="${inTime}" onchange="updateTime(${s.id}, this.value, 'in')" class="bg-transparent text-[9px] font-mono font-bold text-center outline-none w-14 text-emerald-700">
                                 </div>
-                                <button onclick="markAttendance(${s.id}, 'out')" class="w-9 h-9 rounded-full bg-white border-2 border-orange-100 text-orange-400 hover:bg-orange-50 hover:text-orange-500 hover:border-orange-300 shadow-sm transition flex items-center justify-center active:scale-90">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                </button>
+                                <button onclick="markAttendance(${s.id}, 'out')" class="w-9 h-9 rounded-full bg-white border-2 border-orange-100 text-orange-400 hover:bg-orange-50 hover:text-orange-500 hover:border-orange-300 shadow-sm transition flex items-center justify-center active:scale-90"><i class="fas fa-sign-out-alt"></i></button>
                             </div>`;
                     } else {
-                        // MARKED IN & OUT (FULL PRESENT)
                         actionArea = `
                             <div class="flex gap-2">
                                 <div class="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex flex-col items-center min-w-[50px]">
@@ -467,7 +483,7 @@
                             </div>`;
                     }
                 } else {
-                    // DEFAULT: P / A BUTTONS (New Design)
+                    // P/A BUTTONS
                     actionArea = `
                         <div class="flex gap-2">
                             <button onclick="markAttendance(${s.id}, 'in')" class="w-9 h-9 rounded-full bg-emerald-500 text-white shadow-md hover:bg-emerald-600 transition flex items-center justify-center active:scale-95 text-[10px] font-black border-2 border-white ring-2 ring-emerald-100">P</button>
@@ -478,18 +494,14 @@
                 return `
                     <div class="bg-white border-b border-slate-50 p-3 flex items-center justify-between hover:bg-slate-50 transition animate-fadeIn noselect">
                         <div class="flex items-center gap-3 overflow-hidden cursor-pointer flex-1" onclick="tryResetAttendance(${s.id}, '${selectedDate}')">
-                            <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold shrink-0 shadow-inner">
-                                ${s.name.charAt(0)}
-                            </div>
+                            <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold shrink-0 shadow-inner">${s.name.charAt(0)}</div>
                             <div class="flex flex-col min-w-0">
                                 <h3 class="text-[10px] font-bold text-slate-700 uppercase truncate pr-2">${s.name}</h3>
                                 <p class="text-[8px] font-mono text-slate-400 tracking-wider">${s.dmId}</p>
                                 ${status ? `<p class="text-[6px] text-slate-300 font-bold uppercase tracking-widest mt-0.5">TAP 3x RESET</p>` : ''}
                             </div>
                         </div>
-                        <div class="shrink-0 ml-2">
-                            ${actionArea}
-                        </div>
+                        <div class="shrink-0 ml-2">${actionArea}</div>
                     </div>`;
             }).join('');
         }
@@ -499,39 +511,18 @@
             const activeBatch = document.getElementById('batchFilter').value;
             let list = students.filter(s => activeBatch === 'All' ? true : s.batch === activeBatch);
             if (isNewestFirst) list = [...list].reverse();
-            
-            if(list.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-slate-300 text-[10px] font-bold uppercase">No Records</div>';
-                return;
-            }
-
+            if(list.length === 0) { container.innerHTML = '<div class="text-center py-10 text-slate-300 text-[10px] font-bold uppercase">No Records</div>'; return; }
             container.innerHTML = list.map(s => `
                 <div class="bg-white border border-slate-100 rounded-xl p-3 mb-2 flex items-center justify-between shadow-sm card-animate">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-black uppercase">
-                            ${s.name.charAt(0)}
-                        </div>
-                        <div>
-                            <h3 class="text-[10px] font-black text-slate-700 uppercase">${s.name}</h3>
-                            <p class="text-[8px] font-mono text-slate-400">${s.dmId}</p>
-                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-black uppercase">${s.name.charAt(0)}</div>
+                        <div><h3 class="text-[10px] font-black text-slate-700 uppercase">${s.name}</h3><p class="text-[8px] font-mono text-slate-400">${s.dmId}</p></div>
                     </div>
                     <button onclick="requestDeleteStudent(${s.id})" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"><i class="fas fa-trash-alt text-xs"></i></button>
                 </div>`).join('');
         }
 
-        function downloadCSV() {
-            if(students.length === 0) return showToast("No Data to Export", "error");
-            let csvContent = "data:text/csv;charset=utf-8,ID,Name,Batch,RegDate\n";
-            students.forEach(s => csvContent += `${s.dmId},${s.name},${s.batch},${s.regDate}\n`);
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "student_db.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+        function updateStats() { document.getElementById('stat-total').innerText = students.length; }
     </script>
 </body>
 </html>
