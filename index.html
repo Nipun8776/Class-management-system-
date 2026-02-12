@@ -54,12 +54,12 @@
 
     <div id="loading-overlay">
         <div class="loader mb-4"></div>
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Connecting to Database...</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Connecting...</p>
     </div>
 
     <div id="confirm-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-5 w-full max-w-xs text-center shadow-2xl">
-            <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest mb-5">Confirm Action?</h3>
+            <h3 id="modal-title" class="text-xs font-black text-slate-800 uppercase tracking-widest mb-5">Confirm Action?</h3>
             <div class="flex gap-2">
                 <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-bold uppercase">Cancel</button>
                 <button id="modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-[10px] font-bold uppercase shadow-lg">Yes</button>
@@ -131,12 +131,14 @@
 
                 <div id="studentProfile" class="hidden w-full animate-fadeIn">
                     <button onclick="resetSearch()" class="mb-4 text-[9px] font-black text-slate-400 flex items-center gap-1 uppercase tracking-tighter"><i class="fas fa-arrow-left"></i> Back</button>
-                    
                     <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center mb-6 shadow-inner relative overflow-hidden">
                         <div class="absolute top-0 right-0 bg-indigo-50 text-indigo-600 px-2 py-1 rounded-bl-xl text-[9px] font-black" id="resRank"></div>
                         <h3 id="resName" class="text-sm font-black text-slate-800 uppercase leading-none"></h3>
                         <p id="resId" class="text-[10px] font-mono text-slate-500 mt-1"></p>
-                        <span id="resBatch" class="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-[8px] font-bold text-slate-400 uppercase mt-2 inline-block shadow-sm"></span>
+                        <div class="mt-2 flex flex-col items-center">
+                            <span id="resBatch" class="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-[8px] font-bold text-slate-400 uppercase shadow-sm"></span>
+                            <span id="resJoined" class="text-[8px] font-bold text-slate-300 mt-1 uppercase tracking-widest"></span>
+                        </div>
 
                         <div class="flex gap-2 justify-center mt-4">
                             <div class="bg-white px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm"><span class="text-[8px] font-bold text-emerald-400 uppercase block mb-1">Present</span><span id="totalPresent" class="text-sm font-black text-slate-700">0</span></div>
@@ -144,11 +146,9 @@
                             <div class="bg-white px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm"><span class="text-[8px] font-bold text-indigo-400 uppercase block mb-1">Marks</span><span id="totalMarks" class="text-sm font-black text-slate-700">0</span></div>
                         </div>
                     </div>
-                    
                     <div class="flex justify-between items-center mb-3 px-1">
                         <h4 class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Student History</h4>
-                        <select id="profilePaperFilter" onchange="renderStudentHistory()" class="bg-white border border-slate-200 text-[9px] font-bold rounded-lg px-2 py-1 outline-none uppercase text-indigo-600 max-w-[150px]">
-                            </select>
+                        <select id="profilePaperFilter" onchange="renderStudentHistory()" class="bg-white border border-slate-200 text-[9px] font-bold rounded-lg px-2 py-1 outline-none uppercase text-indigo-600 max-w-[150px]"></select>
                     </div>
                     <div id="combinedHistory" class="space-y-2 max-h-[350px] overflow-y-auto pr-1"></div>
                 </div>
@@ -380,6 +380,7 @@
 
         async function requestDeleteStudent(id) {
             pendingDeleteId = id; document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-title').innerText = "Delete Student?";
             document.getElementById('modal-confirm-btn').onclick = async function() {
                 await supabaseClient.from('students').delete().eq('id', id);
                 fetchData(); closeModal(); showToast("Deleted", "success");
@@ -387,13 +388,15 @@
         }
 
         async function requestHardReset() {
-            if(confirm("DELETE ALL DATA?")) {
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-title').innerText = "SYSTEM RESET? (ALL DATA)";
+            document.getElementById('modal-confirm-btn').onclick = async function() {
                 await supabaseClient.from('attendance').delete().neq('id', 0);
                 await supabaseClient.from('marks').delete().neq('id', 0);
                 await supabaseClient.from('students').delete().neq('id', 0);
                 await supabaseClient.from('cancelled_dates').delete().neq('id', 0);
                 location.reload();
-            }
+            };
         }
 
         // --- 6. RENDER FUNCTIONS ---
@@ -405,6 +408,7 @@
                 document.getElementById('studentProfile').classList.remove('hidden'); document.getElementById('searchBoxContainer').classList.add('hidden');
                 document.getElementById('resName').innerText = s.name; document.getElementById('resId').innerText = s.dm_id;
                 document.getElementById('resBatch').innerText = s.batch + " BATCH";
+                document.getElementById('resJoined').innerText = "Joined: " + s.reg_date; // Joined Date Added
                 
                 const sAttend = attendance.filter(a => a.student_id === s.id);
                 const sMarks = marks.filter(m => m.student_id === s.id);
@@ -447,6 +451,8 @@
                 return html;
             }).join('') || '<p class="text-center text-[9px] text-slate-300 py-10 uppercase">No history found</p>';
         }
+
+        function resetSearch() { document.getElementById('studentProfile').classList.add('hidden'); document.getElementById('searchBoxContainer').classList.remove('hidden'); document.getElementById('searchId').value = ''; currentProfileId = null; }
 
         function populatePaperStats() {
             const select = document.getElementById('analysisPaperSelect');
