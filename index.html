@@ -3,30 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paper Class Management Pro</title>
+    <title>Paper class management system</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { overflow-x: hidden; touch-action: pan-y; -webkit-overflow-scrolling: touch; font-family: sans-serif; background-color: #f8fafc; }
+        body { overflow-x: hidden; touch-action: pan-y; font-family: sans-serif; background-color: #f8fafc; }
         .section-tab { display: none; }
         .section-tab.active { display: block; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         #stats-sidebar { transition: transform 0.3s ease-in-out; }
         .sidebar-hidden { transform: translateX(-100%); }
         .sidebar-visible { transform: translateX(0); }
-        
         .noselect { -webkit-user-select: none; user-select: none; }
-        .card-animate { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        
-        input[type="date"], input[type="time"] { cursor: pointer; }
+        input[type="date"], input[type="time"], select { cursor: pointer; border:none; outline:none; background:transparent; font-weight:bold; }
         input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
-
-        /* Smaller scale for better balance */
-        .btn-sm { padding: 8px 16px; font-size: 10px; }
-        .input-balanced { padding: 10px 14px; font-size: 12px; border-radius: 12px; }
-        
+        .time-box { width: 50px; font-size: 11px; text-align: center; color: #334155; font-weight: 800; }
         #toast-box {
             visibility: hidden; min-width: 200px; background-color: #333; color: #fff; text-align: center;
             border-radius: 50px; padding: 12px; position: fixed; z-index: 9999; left: 50%; bottom: 30px;
@@ -34,38 +25,33 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: all 0.3s;
         }
         #toast-box.show { visibility: visible; opacity: 1; bottom: 50px; }
-        .marks-table th { background-color: #f1f5f9; color: #64748b; font-size: 9px; text-transform: uppercase; padding: 8px; font-weight: 800; }
-        .marks-table td { padding: 8px; font-size: 11px; font-weight: 600; border-bottom: 1px solid #f1f5f9; }
+        .history-card { border-left: 4px solid #e2e8f0; margin-bottom: 8px; border-radius: 8px; padding: 10px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .history-card.present { border-left-color: #10b981; }
+        .history-card.absent { border-left-color: #ef4444; }
     </style>
 </head>
 <body class="text-slate-800">
-
     <div id="confirm-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl p-5 w-full max-w-xs text-center shadow-2xl">
+        <div class="bg-white rounded-3xl p-5 w-full max-w-xs text-center shadow-2xl">
             <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest mb-5">Confirm Action?</h3>
             <div class="flex gap-2">
                 <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-bold uppercase">Cancel</button>
-                <button id="modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-[10px] font-bold uppercase shadow-lg">Confirm</button>
+                <button id="modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-[10px] font-bold uppercase shadow-lg">Yes</button>
             </div>
         </div>
     </div>
     <div id="toast-box">Notification</div>
 
     <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div class="max-w-2xl mx-auto px-4">
-            <div class="flex justify-between items-center h-14">
-                <div class="flex items-center space-x-2">
-                    <button onclick="toggleSidebar()" class="p-2 text-slate-600 rounded-full active:bg-slate-100"><i class="fas fa-bars text-lg"></i></button>
-                    <div class="leading-none">
-                        <span class="block text-[10px] font-black text-indigo-600 uppercase tracking-tighter">PAPER CLASS</span>
-                        <span class="block text-[8px] font-bold text-slate-400 uppercase">PRO SYSTEM</span>
-                    </div>
-                </div>
-                <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg shadow-inner">
-                    <button onclick="switchTab('home')" class="px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-white bg-indigo-600 shadow-sm" id="btn-home">Home</button>
-                    <button onclick="switchTab('attend')" class="px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-slate-500" id="btn-attend">Attend</button>
-                    <button onclick="switchTab('marks')" class="px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-slate-500" id="btn-marks">Marks</button>
-                </div>
+        <div class="max-w-2xl mx-auto px-4 h-14 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleSidebar()" class="p-2 text-slate-600 rounded-full active:bg-slate-100"><i class="fas fa-bars text-lg"></i></button>
+                <span class="text-[9px] font-black text-indigo-600 uppercase leading-tight">Paper class<br>management system</span>
+            </div>
+            <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+                <button onclick="switchTab('home')" class="px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-white bg-indigo-600 shadow-sm" id="btn-home">Home</button>
+                <button onclick="switchTab('attend')" class="px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-slate-500" id="btn-attend">Attend</button>
+                <button onclick="switchTab('marks')" class="px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-slate-500" id="btn-marks">Marks</button>
             </div>
         </div>
     </nav>
@@ -73,134 +59,130 @@
     <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-50 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
     <div id="stats-sidebar" class="fixed top-0 left-0 h-full w-64 bg-white z-[60] shadow-2xl sidebar-hidden flex flex-col border-r border-slate-100">
         <div class="p-5">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Navigation</h2>
-                <button onclick="toggleSidebar()" class="text-slate-300"><i class="fas fa-times"></i></button>
-            </div>
+            <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center">Control Panel</h2>
             <div class="space-y-1">
-                <button onclick="switchTab('home')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition"><i class="fas fa-home w-6"></i> Home</button>
-                <button onclick="switchTab('attend')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition"><i class="fas fa-calendar-check w-6"></i> Attendance</button>
-                <button onclick="switchTab('reg')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition"><i class="fas fa-user-plus w-6"></i> Registration</button>
-                <button onclick="switchTab('marks')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition"><i class="fas fa-file-alt w-6"></i> Paper Marks</button>
-                <button onclick="switchTab('rank')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition"><i class="fas fa-trophy w-6"></i> Ranking</button>
-                <button onclick="switchTab('list')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition"><i class="fas fa-id-card w-6"></i> Database</button>
+                <button onclick="switchTab('home')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-home w-6"></i> Home</button>
+                <button onclick="switchTab('attend')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-calendar-check w-6"></i> Attendance</button>
+                <button onclick="switchTab('reg')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-user-plus w-6"></i> Registration</button>
+                <button onclick="switchTab('marks')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-file-alt w-6"></i> Paper Marks</button>
+                <button onclick="switchTab('rank')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-trophy w-6"></i> Rankings</button>
+                <button onclick="switchTab('list')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-id-card w-6"></i> Student List</button>
             </div>
         </div>
-        <div class="p-5 mt-auto border-t border-slate-50 bg-slate-50">
-             <button onclick="downloadCSV()" class="w-full py-2.5 mb-2 rounded-xl border border-slate-200 bg-white text-[9px] font-black uppercase text-slate-500 shadow-sm">Export Data</button>
-            <button onclick="requestHardReset()" class="w-full py-2 text-[8px] font-bold text-rose-300 uppercase tracking-widest">System Reset</button>
+        <div class="p-5 mt-auto border-t border-slate-50">
+            <button onclick="requestHardReset()" class="w-full py-2.5 text-[8px] font-bold text-rose-400 uppercase tracking-widest border border-rose-100 rounded-xl hover:bg-rose-50 transition">System Reset</button>
         </div>
     </div><main class="max-w-2xl mx-auto px-4 py-4 pb-20">
         
         <section id="home" class="section-tab active">
             <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 min-h-[50vh]">
                 <div id="searchBoxContainer" class="w-full flex flex-col items-center justify-center pt-5">
-                    <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 text-lg mb-4"><i class="fas fa-search"></i></div>
-                    <h2 class="text-xs font-black uppercase tracking-widest text-slate-800">Student Profile</h2>
-                    <div class="w-full max-w-xs relative mt-6">
-                        <input id="searchId" type="tel" maxlength="8" placeholder="DM Barcode..." class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-center text-sm font-black tracking-widest outline-none focus:border-indigo-500 transition">
-                        <button onclick="lookupStudent()" class="absolute right-1.5 top-1.5 bottom-1.5 aspect-square bg-indigo-600 text-white rounded-lg"><i class="fas fa-arrow-right"></i></button>
+                    <h2 class="text-xs font-black uppercase tracking-widest text-slate-800 mb-6">Student Search</h2>
+                    <div class="w-full max-w-xs relative">
+                        <input id="searchId" type="tel" maxlength="8" placeholder="Enter DM Barcode..." class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-center text-sm font-black tracking-widest outline-none focus:border-indigo-500">
+                        <button onclick="lookupStudent()" class="absolute right-1.5 top-1.5 bottom-1.5 aspect-square bg-indigo-600 text-white rounded-lg active:scale-90 transition"><i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
 
                 <div id="studentProfile" class="hidden w-full animate-fadeIn">
-                    <button onclick="resetSearch()" class="mb-4 text-[10px] font-black text-slate-400 flex items-center gap-1 uppercase tracking-tighter"><i class="fas fa-arrow-left"></i> Back</button>
-                    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-5 text-center mb-5 shadow-inner">
-                        <div class="w-12 h-12 bg-white rounded-full mx-auto flex items-center justify-center text-indigo-600 text-base font-black mb-2 shadow-sm" id="profileAvatar">A</div>
+                    <button onclick="resetSearch()" class="mb-4 text-[9px] font-black text-slate-400 flex items-center gap-1 uppercase tracking-tighter"><i class="fas fa-arrow-left"></i> Back</button>
+                    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-center mb-6 shadow-inner">
                         <h3 id="resName" class="text-sm font-black text-slate-800 uppercase leading-none"></h3>
                         <p id="resId" class="text-[10px] font-mono text-slate-500 mt-1"></p>
-                        <p id="resJoinDate" class="text-[8px] font-bold text-slate-400 mt-2 uppercase tracking-widest"></p>
-                    </div>
-                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <div class="bg-slate-50 p-3 border-b border-slate-100 flex justify-between items-center"><h4 class="text-[9px] font-black uppercase text-slate-500">History</h4><span id="totalPapers" class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[8px] font-black uppercase">0 Papers</span></div>
-                        <div class="max-h-52 overflow-y-auto">
-                            <table class="w-full marks-table text-left"><thead><tr><th>Month/Paper</th><th class="text-right">Score</th></tr></thead><tbody id="studentMarksList"></tbody></table>
+                        <div class="flex gap-2 justify-center mt-4">
+                            <div class="bg-white px-3 py-1.5 rounded-lg border border-emerald-100"><span class="text-[8px] font-bold text-emerald-400 uppercase block mb-1">Present</span><span id="totalPresent" class="text-sm font-black text-slate-700">0</span></div>
+                            <div class="bg-white px-3 py-1.5 rounded-lg border border-rose-100"><span class="text-[8px] font-bold text-rose-400 uppercase block mb-1">Absent</span><span id="totalAbsent" class="text-sm font-black text-slate-700">0</span></div>
                         </div>
                     </div>
+                    <h4 class="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-3 ml-2">Combined History</h4>
+                    <div id="combinedHistory" class="space-y-2"></div>
                 </div>
-            </div>
-        </section>
-
-        <section id="reg" class="section-tab">
-            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 max-w-sm mx-auto">
-                <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center">New Student</h2>
-                <div class="flex flex-col gap-3">
-                    <input id="regId" type="tel" maxlength="8" placeholder="DM Barcode (8-Digits)" class="input-balanced bg-slate-50 border border-slate-100 font-bold tracking-widest outline-none focus:bg-white focus:border-indigo-400 transition">
-                    <input id="regName" type="text" placeholder="Full Name" class="input-balanced bg-slate-50 border border-slate-100 font-bold uppercase outline-none focus:bg-white focus:border-indigo-400 transition">
-                    <select id="regBatch" class="input-balanced bg-slate-50 border border-slate-100 font-bold uppercase outline-none appearance-none"><option value="2026">2026 Batch</option><option value="2027">2027 Batch</option></select>
-                    <div class="flex flex-col gap-1">
-                        <label class="text-[8px] font-black text-slate-400 uppercase ml-2">Joined Date</label>
-                        <input id="regDate" type="date" class="input-balanced bg-slate-50 border border-slate-100 font-bold text-slate-600 outline-none">
-                    </div>
-                    <button onclick="addStudent()" class="bg-indigo-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-100 active:scale-95 transition mt-3">Register Student</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="marks" class="section-tab">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden max-w-sm mx-auto">
-                <div class="bg-slate-50 p-5 border-b border-slate-200">
-                    <h2 class="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-4">Paper Marks</h2>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <select id="markMonth" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold uppercase outline-none shadow-sm"><option value="January">January</option><option value="February" selected>February</option><option value="March">March</option><option value="April">April</option><option value="May">May</option><option value="June">June</option><option value="July">July</option><option value="August">August</option><option value="September">September</option><option value="October">October</option><option value="November">November</option><option value="December">December</option></select>
-                        <select id="markWeek" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold uppercase outline-none shadow-sm"><option value="1st Week">1st Week</option><option value="2nd Week">2nd Week</option><option value="3rd Week">3rd Week</option><option value="4th Week">4th Week</option><option value="5th Week">5th Week</option></select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <select id="markPaperType" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold uppercase outline-none shadow-sm"><option value="" disabled selected>Type</option><option value="Full Paper">Full Paper</option><option value="Half Paper">Half Paper</option></select>
-                        <input id="markPaperNo" type="tel" placeholder="Paper No (e.g 54)" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold uppercase shadow-sm outline-none">
-                    </div>
-                    <div class="relative"><input id="marksSearchId" type="tel" maxlength="8" placeholder="Search ID to Mark..." class="w-full bg-white border-2 border-slate-100 rounded-2xl py-3.5 px-4 text-xs font-black tracking-widest outline-none focus:border-indigo-500 shadow-sm transition"><button onclick="searchForMarking()" class="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-indigo-600 text-white rounded-lg text-[10px] font-black uppercase shadow-md">Find</button></div>
-                </div>
-                <div id="marks-search-result" class="p-6 bg-white min-h-[150px] flex items-center justify-center"><p class="text-[9px] text-slate-300 font-bold uppercase tracking-widest text-center">Enter Paper details & student ID</p></div>
             </div>
         </section>
 
         <section id="attend" class="section-tab">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div class="bg-slate-50 p-5 border-b border-slate-200">
+                <div class="bg-slate-50 p-4 border-b border-slate-200">
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-[10px] font-black text-indigo-900 uppercase tracking-widest">Attendance</h2>
-                        <div class="flex items-center gap-2"><div id="dayIndicator" class="px-2 py-1 rounded bg-slate-200 text-[8px] font-black uppercase text-slate-500">Day</div><input type="date" id="attendPicker" onchange="renderAttendanceList()" class="bg-white border border-slate-200 rounded px-2 py-1 text-[9px] font-bold outline-none shadow-sm"></div>
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="attendPicker" onchange="renderAttendanceList()" class="bg-white border border-slate-200 rounded px-2 py-1 text-[9px] font-bold outline-none shadow-sm">
+                            <button onclick="toggleCancelClass()" id="cancelClassBtn" class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-[8px] font-black uppercase text-slate-400 hover:text-red-500 transition">🚫 <span id="cancelBtnText">Cancel Class</span></button>
+                        </div>
+                        <div id="dayIndicator" class="px-2 py-1 rounded bg-slate-200 text-[8px] font-black uppercase text-slate-500">Day</div>
                     </div>
-                    <div class="mb-4 relative"><input id="attendSearch" type="tel" maxlength="8" placeholder="Search Barcode..." oninput="renderAttendanceList()" class="w-full bg-white border-2 border-slate-100 rounded-xl py-3 px-4 text-xs font-bold tracking-widest outline-none focus:border-indigo-400 transition shadow-sm"><i class="fas fa-search absolute right-4 top-3 text-slate-400 text-[10px]"></i></div>
-                    <div class="flex gap-2"><select id="attendBatchFilter" onchange="renderAttendanceList()" class="flex-1 bg-white border border-slate-200 text-[9px] font-bold rounded p-2 outline-none uppercase shadow-sm"><option value="All">All Batches</option><option value="2026">2026</option><option value="2027">2027</option></select><select id="attendStatusFilter" onchange="renderAttendanceList()" class="flex-1 bg-white border border-slate-200 text-[9px] font-bold rounded p-2 outline-none uppercase shadow-sm"><option value="All">All Status</option><option value="Present">Present</option><option value="Absent">Absent</option></select></div>
+                    <input id="attendSearch" type="tel" maxlength="8" placeholder="Search ID..." oninput="renderAttendanceList()" class="w-full bg-white border-2 border-slate-100 rounded-xl py-2 px-4 text-xs font-bold outline-none mb-3 shadow-sm">
+                    <div class="flex gap-2"><select id="attendBatchFilter" onchange="renderAttendanceList()" class="flex-1 bg-white border border-slate-200 text-[9px] font-bold rounded p-2 outline-none uppercase shadow-sm"><option value="All">All Batches</option><option value="2026">2026</option><option value="2027">2027</option></select><select id="attendStatusFilter" onchange="renderAttendanceList()" class="flex-1 bg-white border border-slate-200 text-[9px] font-bold rounded p-2 outline-none uppercase shadow-sm"><option value="All">All Status</option><option value="Present">Present Only</option><option value="Absent">Absent Only</option></select></div>
                 </div>
                 <div id="attendance-list-container" class="p-4 space-y-3 bg-white min-h-[400px]"></div>
             </div>
         </section>
-        
+
+        <section id="marks" class="section-tab">
+            <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden max-w-sm mx-auto shadow-sm">
+                <div class="bg-slate-50 p-5 border-b border-slate-200 text-center">
+                    <h2 class="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-4">Paper Marks Entry</h2>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="markMonth" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold uppercase outline-none shadow-sm"><option value="January">January</option><option value="February" selected>February</option><option value="March">March</option><option value="April">April</option><option value="May">May</option><option value="June">June</option><option value="July">July</option><option value="August">August</option><option value="September">September</option><option value="October">October</option><option value="November">November</option><option value="December">December</option></select>
+                        <select id="markWeek" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold uppercase shadow-sm"><option value="1st Week">1st Week</option><option value="2nd Week">2nd Week</option><option value="3rd Week">3rd Week</option><option value="4th Week">4th Week</option></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <select id="markPaperType" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold uppercase shadow-sm"><option value="" disabled selected>Paper Type</option><option value="Full Paper">Full Paper</option><option value="Half Paper">Half Paper</option></select>
+                        <input id="markPaperNo" type="tel" placeholder="Paper No" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold outline-none shadow-sm">
+                    </div>
+                    <input id="markDate" type="date" class="bg-white border border-slate-200 p-2.5 rounded-xl text-[10px] font-bold outline-none shadow-sm mb-6 w-full">
+                    
+                    <div class="space-y-3 pt-4 border-t border-slate-100">
+                        <input id="marksDirectId" type="tel" maxlength="8" placeholder="DM BARCODE ID" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 px-4 text-center text-sm font-black tracking-widest outline-none focus:border-indigo-500 transition">
+                        <input id="marksDirectScore" type="number" min="1" max="100" placeholder="SCORE (1-100)" class="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl py-3 px-4 text-center text-sm font-black tracking-widest outline-none focus:border-indigo-500 transition">
+                        <button onclick="saveQuickMarkDirect()" class="w-full py-3.5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase shadow-lg active:scale-95 transition">Save Record</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="rank" class="section-tab">
             <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm max-w-sm mx-auto">
-                <h2 class="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-5 text-center">Batch Rankings</h2>
-                <select id="rankBatchFilter" onchange="renderRankList()" class="w-full bg-slate-50 border border-slate-200 p-2.5 mb-4 rounded-xl text-[10px] font-black uppercase outline-none appearance-none"><option value="2026">2026 Batch</option><option value="2027">2027 Batch</option></select>
+                <h2 class="text-[10px] font-black text-indigo-900 uppercase mb-4 text-center tracking-widest">Class Rankings</h2>
+                <div class="flex gap-1 mb-4">
+                    <select id="rankBatchFilter" onchange="renderRankList()" class="flex-1 bg-slate-50 border border-slate-200 p-2 rounded-lg text-[9px] font-black uppercase outline-none"><option value="2026">2026</option><option value="2027">2027</option></select>
+                    <select id="rankPaperSelect" onchange="renderRankList()" class="flex-1 bg-slate-50 border border-slate-200 p-2 rounded-lg text-[9px] font-black uppercase outline-none"></select>
+                </div>
                 <div id="rank-list-container" class="space-y-2"></div>
+            </div>
+        </section>
+
+        <section id="reg" class="section-tab">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 max-w-sm mx-auto">
+                <h2 class="text-[10px] font-black text-slate-400 uppercase mb-6 text-center">Register Student</h2>
+                <div class="flex flex-col gap-3">
+                    <input id="regId" type="tel" maxlength="8" placeholder="DM Barcode (8-Digits)" class="bg-slate-50 p-3 rounded-xl text-sm font-bold border border-slate-100 outline-none">
+                    <input id="regName" type="text" placeholder="Full Name" class="bg-slate-50 p-3 rounded-xl text-sm font-bold uppercase border border-slate-100 outline-none">
+                    <select id="regBatch" class="bg-slate-50 p-3 rounded-xl text-sm font-bold border border-slate-100 outline-none"><option value="2026">2026 Batch</option><option value="2027">2027 Batch</option></select>
+                    <div class="flex flex-col gap-1"><label class="text-[8px] font-black text-slate-400 uppercase ml-2">Joined Date</label><input id="regDate" type="date" class="bg-slate-50 p-3 rounded-xl text-sm font-bold"></div>
+                    <button onclick="addStudent()" class="bg-indigo-600 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition">Register Now</button>
+                </div>
             </div>
         </section>
 
         <section id="list" class="section-tab">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-                <div class="flex justify-between items-center mb-4"><h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Database</h2><select id="batchFilter" onchange="renderFullList()" class="bg-slate-50 border border-slate-200 text-[9px] font-bold rounded p-1 outline-none"><option value="All">All</option><option value="2026">2026</option><option value="2027">2027</option></select></div>
+                <div class="flex justify-between items-center mb-4"><h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Database</h2><select id="batchFilter" onchange="renderFullList()" class="bg-slate-50 border border-slate-200 text-[9px] font-bold rounded p-1 outline-none shadow-sm"><option value="All">All</option><option value="2026">2026</option><option value="2027">2027</option></select></div>
                 <div id="full-student-list" class="space-y-2"></div>
             </div>
         </section>
-
-        <section id="stats" class="section-tab">
-            <div class="bg-white rounded-3xl border border-slate-100 p-10 text-center flex flex-col items-center justify-center min-h-[30vh] shadow-sm"><div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 text-lg mb-3 shadow-inner"><i class="fas fa-users"></i></div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Students</p><h2 id="stat-page-total" class="text-5xl font-black text-slate-800 mt-1 tracking-tighter">0</h2></div></section>
     </main><script>
         let students = JSON.parse(localStorage.getItem('students')) || [];
         let attendance = JSON.parse(localStorage.getItem('attendance')) || [];
         let marks = JSON.parse(localStorage.getItem('marks')) || [];
-        let isNewestFirst = true;
-        let clickTrackers = {}; 
-        let pendingDeleteId = null;
+        let cancelledDates = JSON.parse(localStorage.getItem('cancelledDates')) || [];
+        let clickTrackers = {}; let pendingDeleteId = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('attendPicker').value = today;
             document.getElementById('regDate').value = today;
-            updateStats();
-            switchTab('home'); 
-            updateDayIndicator(today); 
+            document.getElementById('markDate').value = today;
+            switchTab('home'); updateDayIndicator(today); populateRankFilters();
         });
 
         // --- NAVIGATION ---
@@ -208,145 +190,126 @@
             document.querySelectorAll('section.section-tab').forEach(s => s.style.display = 'none');
             const target = document.getElementById(id);
             if(target) target.style.display = 'block';
-            
-            document.querySelectorAll('nav button').forEach(b => { 
-                if(b.id) b.className = "px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-slate-500 active:bg-white"; 
-            });
-            const navBtn = document.getElementById('btn-' + (id==='reg'||id==='list'||id==='rank'||id==='stats' ? 'home' : id));
-            if(navBtn) navBtn.className = "px-3 py-1.5 text-[9px] font-black uppercase rounded-md transition text-white bg-indigo-600 shadow-md";
-
-            const sb = document.getElementById('stats-sidebar');
-            if(!sb.classList.contains('sidebar-hidden')) toggleSidebar();
-
-            if(id === 'list') renderFullList();
-            if(id === 'attend') renderAttendanceList();
-            if(id === 'rank') renderRankList();
-            if(id === 'stats') renderStatsPage();
+            document.querySelectorAll('nav button').forEach(b => { if(b.id) b.className = "px-3 py-1.5 text-[9px] font-black uppercase rounded-md text-slate-500"; });
+            const navBtn = document.getElementById('btn-' + (['reg','list','rank','stats'].includes(id) ? 'home' : id));
+            if(navBtn) navBtn.className = "px-3 py-1.5 text-[9px] font-black uppercase rounded-md text-white bg-indigo-600 shadow-sm";
+            if(!document.getElementById('stats-sidebar').classList.contains('sidebar-hidden')) toggleSidebar();
+            if(id === 'list') renderFullList(); if(id === 'attend') renderAttendanceList(); if(id === 'rank') { populateRankFilters(); renderRankList(); }
         }
 
-        function toggleSidebar() {
-            const sb = document.getElementById('stats-sidebar');
-            const ol = document.getElementById('sidebar-overlay');
-            if(sb.classList.contains('sidebar-hidden')) { sb.classList.remove('sidebar-hidden'); ol.classList.remove('hidden'); } 
-            else { sb.classList.add('sidebar-hidden'); ol.classList.add('hidden'); }
+        function toggleSidebar() { document.getElementById('stats-sidebar').classList.toggle('sidebar-hidden'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); }
+        function showToast(msg, type) { const t = document.getElementById('toast-box'); t.innerText = msg; t.className = type === 'error' ? 'bg-red-500 text-white show shadow-lg' : 'bg-emerald-500 text-white show shadow-lg'; setTimeout(() => t.classList.remove('show'), 3000); }
+        function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); pendingDeleteId = null; }
+
+        // --- REGISTRATION ---
+        function addStudent() {
+            const id = document.getElementById('regId').value.trim();
+            const name = document.getElementById('regName').value.trim().toUpperCase();
+            if(!id || id.length != 8 || !name) return showToast("Correct details required", "error");
+            if(students.some(s => s.dmId === id)) return showToast("Barcode ID already exists!", "error");
+            students.push({ id: Date.now(), dmId: id, name, batch: document.getElementById('regBatch').value, regDate: document.getElementById('regDate').value });
+            localStorage.setItem('students', JSON.stringify(students));
+            showToast("Registered Successfully!", "success");
+            document.getElementById('regId').value = ''; document.getElementById('regName').value = '';
         }
 
-        function showToast(msg, type) {
-            const toast = document.getElementById('toast-box');
-            toast.innerText = msg; toast.className = type === 'error' ? 'bg-red-500 text-white show' : 'bg-emerald-500 text-white show';
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        // --- MARKS LOGIC ---
-        function searchForMarking() {
-            const mType = document.getElementById('markPaperType').value;
-            const mNo = document.getElementById('markPaperNo').value.trim();
-            const id = document.getElementById('marksSearchId').value.trim();
-            const container = document.getElementById('marks-search-result');
-
-            // VALIDATION: FIRST CHECK PAPER DETAILS
-            if(!mType || !mNo) { showToast("Enter Paper Details First", "error"); return; }
-            if(!id) { showToast("Enter Student ID", "error"); return; }
-
-            const s = students.find(x => x.dmId === id);
-            if(!s) { container.innerHTML = '<p class="text-[10px] text-red-500 font-black uppercase tracking-widest">Student Not Found</p>'; return; }
-
-            container.innerHTML = `
-                <div class="w-full animate-fadeIn bg-indigo-50 border border-indigo-100 p-5 rounded-2xl shadow-inner text-center">
-                    <h3 class="text-xs font-black text-slate-800 uppercase mb-1">${s.name}</h3>
-                    <p class="text-[9px] font-mono text-slate-400 mb-4">${s.dmId}</p>
-                    <div class="flex gap-2">
-                        <input id="quickScore" type="number" min="1" max="100" placeholder="Score (1-100)" class="flex-1 bg-white border border-slate-200 p-3 rounded-xl text-center font-black text-indigo-600 outline-none shadow-sm">
-                        <button onclick="saveQuickMark(${s.id})" class="bg-indigo-600 text-white px-5 rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95 transition">Save</button>
-                    </div>
-                </div>`;
-        }
-
-        function saveQuickMark(studentId) {
-            const scoreVal = document.getElementById('quickScore').value;
-            const score = parseInt(scoreVal);
+        // --- MARKS ---
+        function saveQuickMarkDirect() {
             const mMonth = document.getElementById('markMonth').value;
             const mWeek = document.getElementById('markWeek').value;
             const mType = document.getElementById('markPaperType').value;
             const mNo = document.getElementById('markPaperNo').value.trim();
-
-            // VALIDATION: SCORE MUST BE 1-100
-            if(!scoreVal || score < 1 || score > 100) { showToast("Enter Score between 1-100", "error"); return; }
-            
-            const markObj = { id: Date.now(), studentId, score, month: mMonth, week: mWeek, paperName: `${mType} ${mNo}`, date: new Date().toLocaleDateString() };
-            marks.push(markObj);
+            const mDate = document.getElementById('markDate').value;
+            const barcode = document.getElementById('marksDirectId').value.trim();
+            const scoreVal = document.getElementById('marksDirectScore').value;
+            const score = parseInt(scoreVal);
+            if(!mMonth || !mWeek || !mType || !mNo || !barcode || !scoreVal) return showToast("Fill all fields", "error");
+            if(score < 1 || score > 100) return showToast("Score must be 1-100", "error");
+            const student = students.find(s => s.dmId === barcode);
+            if(!student) return showToast("Student ID not found!", "error");
+            marks.push({ id: Date.now(), studentId: student.id, score, month: mMonth, week: mWeek, paperName: `${mType} ${mNo}`, date: mDate });
             localStorage.setItem('marks', JSON.stringify(marks));
-            
             showToast("Marks Saved!", "success");
-            document.getElementById('marksSearchId').value = '';
-            document.getElementById('marks-search-result').innerHTML = '<p class="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Success! Search Next Student</p>';
+            document.getElementById('marksDirectId').value = ''; document.getElementById('marksDirectScore').value = '';
         }
 
-        // --- CORE FUNCTIONS ---
-        function addStudent() {
-            const id = document.getElementById('regId').value;
-            const name = document.getElementById('regName').value;
-            const batch = document.getElementById('regBatch').value;
-            const date = document.getElementById('regDate').value;
-            if(!id || !name || !date) return showToast("Fill All Fields", "error");
-            students.push({ id: Date.now(), dmId: id, name: name.toUpperCase(), batch, regDate: date });
-            localStorage.setItem('students', JSON.stringify(students));
-            showToast("Registered!", "success");
-            document.getElementById('regId').value = ''; document.getElementById('regName').value = '';
-            updateStats();
-        }
-
+        // --- HOME SEARCH (RECORDS FIX) ---
         function lookupStudent() {
-            const id = document.getElementById('searchId').value;
-            const s = students.find(x => x.dmId === id);
+            const barcode = document.getElementById('searchId').value.trim();
+            const s = students.find(x => x.dmId === barcode);
             if(s) {
                 document.getElementById('studentProfile').classList.remove('hidden'); document.getElementById('searchBoxContainer').classList.add('hidden');
-                document.getElementById('resName').innerText = s.name; document.getElementById('profileAvatar').innerText = s.name.charAt(0);
-                document.getElementById('resId').innerText = s.dmId; document.getElementById('resJoinDate').innerText = "JOINED: " + s.regDate;
+                document.getElementById('resName').innerText = s.name; document.getElementById('resId').innerText = s.dmId;
+                document.getElementById('resJoinDate').innerText = "JOINED: " + s.regDate;
+                const sAttend = attendance.filter(a => a.studentId === s.id);
+                document.getElementById('totalPresent').innerText = sAttend.filter(a => a.status === 'Present').length;
+                document.getElementById('totalAbsent').innerText = sAttend.filter(a => a.status === 'Absent').length;
                 const sMarks = marks.filter(m => m.studentId === s.id);
-                document.getElementById('totalPapers').innerText = sMarks.length + " Papers";
-                document.getElementById('studentMarksList').innerHTML = sMarks.map(m => `<tr><td><div class="flex flex-col"><span class="font-bold">${m.month} - ${m.week}</span><span class="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">${m.paperName}</span></div></td><td class="text-right text-indigo-600 font-black text-sm">${m.score}</td></tr>`).join('') || '<tr><td colspan="2" class="text-center py-4 text-[9px] uppercase font-bold text-slate-300">No Records</td></tr>';
-            } else { showToast("Not Found", "error"); }
+                const allDates = [...new Set([...sMarks.map(m=>m.date), ...sAttend.map(a=>a.date)])].sort().reverse();
+                document.getElementById('combinedHistory').innerHTML = allDates.map(date => {
+                    const m = sMarks.find(mark => mark.date === date); const att = sAttend.find(a => a.date === date);
+                    const isAbs = att && att.status === 'Absent';
+                    return `<div class="history-card ${isAbs?'absent':(att?'present':'')} flex justify-between items-center shadow-sm"><div><span class="text-[9px] font-black text-slate-400 block">${date}</span><span class="text-[10px] font-black text-slate-700">${att ? (isAbs?'ABSENT':'PRESENT - IN: '+att.inTime+' OUT: '+(att.outTime||'--')) : 'No attend info'}</span></div><div class="text-right">${m?`<span class="text-[9px] font-black text-indigo-600 block">${m.paperName}</span><span class="text-xs font-black text-slate-800">${m.score}</span>`:'-'}</div></div>`;
+                }).join('') || '<p class="text-center text-[9px] text-slate-300 font-bold uppercase py-10 tracking-widest">No history found</p>';
+            } else { showToast("ID Not Found", "error"); }
         }
         function resetSearch() { document.getElementById('studentProfile').classList.add('hidden'); document.getElementById('searchBoxContainer').classList.remove('hidden'); document.getElementById('searchId').value = ''; }
 
-        function renderRankList() {
-            const batch = document.getElementById('rankBatchFilter').value;
-            let data = students.filter(s => s.batch === batch).map(s => { const total = marks.filter(m => m.studentId === s.id).reduce((sum, m) => sum + m.score, 0); return { ...s, total }; }).sort((a,b) => b.total - a.total);
-            document.getElementById('rank-list-container').innerHTML = data.map((s, i) => `<div class="bg-white border border-slate-100 p-3 rounded-xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-3"><div class="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-[10px] font-black">#${i+1}</div><div><h4 class="text-[10px] font-black text-slate-700 uppercase">${s.name}</h4><p class="text-[8px] font-mono text-slate-400">${s.dmId}</p></div></div><div class="text-right"><span class="text-xs font-black text-indigo-600">${s.total}</span></div></div>`).join('') || '<p class="text-center py-4 uppercase text-[9px] font-bold text-slate-300">No Data</p>';
+        // --- ATTENDANCE (MANUAL TIME & AM/PM TOGGLE) ---
+        function markAttend(id, type) {
+            const date = document.getElementById('attendPicker').value;
+            const idx = attendance.findIndex(a => a.studentId === id && a.date === date);
+            if(type === 'Present') {
+                const inTime = document.getElementById(`inTime-${id}`).value;
+                const inAmPm = document.getElementById(`inAmPm-${id}`).innerText;
+                if(!inTime) return showToast("Enter IN time", "error");
+                attendance.push({ studentId: id, date, status: 'Present', inTime: `${inTime} ${inAmPm}`, outTime: '' });
+            } else if(type === 'Absent') {
+                attendance.push({ studentId: id, date, status: 'Absent', inTime: '', outTime: '' });
+            } else if(type === 'Out' && idx > -1) {
+                const outTime = document.getElementById(`outTime-${id}`).value;
+                const outAmPm = document.getElementById(`outAmPm-${id}`).innerText;
+                if(!outTime) return showToast("Enter OUT time", "error");
+                attendance[idx].outTime = `${outTime} ${outAmPm}`;
+            }
+            localStorage.setItem('attendance', JSON.stringify(attendance)); renderAttendanceList();
         }
 
-        // --- ATTENDANCE HELPERS ---
-        function getAmPm(t) { if(!t) return ''; const [h, m] = t.split(':'); let hrs = parseInt(h); const ampm = hrs >= 12 ? 'PM' : 'AM'; hrs = hrs % 12; hrs = hrs ? hrs : 12; return `${hrs}:${m} ${ampm}`; }
-        function markAttendance(id, type) { const date = document.getElementById('attendPicker').value; const now = new Date(); const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; const idx = attendance.findIndex(a => a.studentId === id && a.date === date); if(type==='absent'){ if(idx>-1){attendance[idx].status='Absent';attendance[idx].inTime=null;attendance[idx].outTime=null;}else{attendance.push({studentId:id,date,status:'Absent'});} }else if(type==='in'){ if(idx>-1){attendance[idx].status='Present';attendance[idx].inTime=time;}else{attendance.push({studentId:id,date,status:'Present',inTime:time});} }else if(type==='out'){ if(idx>-1)attendance[idx].outTime=time; } localStorage.setItem('attendance', JSON.stringify(attendance)); renderAttendanceList(); }
-        function updateTime(id, val, type) { const date = document.getElementById('attendPicker').value; const idx = attendance.findIndex(a => a.studentId === id && a.date === date); if(idx > -1) { if(type==='in') attendance[idx].inTime=val; if(type==='out') attendance[idx].outTime=val; localStorage.setItem('attendance', JSON.stringify(attendance)); renderAttendanceList(); } }
-        function updateDayIndicator(d) { const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; document.getElementById('dayIndicator').innerText = days[new Date(d).getDay()]; }
-        
+        function toggleAmPm(id, type) {
+            const el = document.getElementById(`${type}AmPm-${id}`);
+            el.innerText = el.innerText === 'AM' ? 'PM' : 'AM';
+        }
+
         function renderAttendanceList() {
-            const container = document.getElementById('attendance-list-container');
-            const batch = document.getElementById('attendBatchFilter').value;
-            const status = document.getElementById('attendStatusFilter').value;
-            const date = document.getElementById('attendPicker').value;
-            const search = document.getElementById('attendSearch').value.trim();
-            updateDayIndicator(date);
-            let f = students.filter(s => (batch==='All' || s.batch===batch) && s.dmId.includes(search));
-            f = f.filter(s => { const r = attendance.find(a => a.studentId === s.id && a.date === date); const st = r ? r.status : 'None'; if (status === 'All') return true; return st === status; });
+            const container = document.getElementById('attendance-list-container'); const date = document.getElementById('attendPicker').value; const search = document.getElementById('attendSearch').value.trim(); const batch = document.getElementById('attendBatchFilter').value; const status = document.getElementById('attendStatusFilter').value; updateDayIndicator(date);
+            if(cancelledDates.includes(date)) { container.innerHTML = `<div class="text-center py-10 opacity-70"><i class="fas fa-ban text-red-400 text-xl mb-2"></i><h2 class="text-red-500 font-black text-xs uppercase tracking-widest">Class Cancelled</h2></div>`; return; }
+            let f = students.filter(s => s.dmId.includes(search) && (batch==='All' || s.batch===batch));
+            f = f.filter(s => { const r = attendance.find(a => a.studentId === s.id && a.date === date); const st = r ? r.status : 'None'; return status === 'All' || st === status; });
+            if(f.length === 0) { container.innerHTML = '<p class="text-center text-[9px] py-10 font-bold text-slate-300 uppercase">No Matches</p>'; return; }
             container.innerHTML = f.map(s => {
                 const r = attendance.find(a => a.studentId === s.id && a.date === date);
-                const st = r ? r.status : null; const it = r ? r.inTime : ''; const ot = r ? r.outTime : '';
-                let act = st === 'Absent' ? `<div class="flex justify-end w-full font-black text-rose-500 text-[9px]">ABSENT</div>` : (st === 'Present' ? `<div class="flex gap-1.5 w-full mt-2"><div class="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg p-1.5 flex flex-col items-center"><span class="text-[6px] font-black text-emerald-400">IN</span><div class="flex items-center w-full justify-center"><input type="time" value="${it}" onchange="updateTime(${s.id}, this.value, 'in')"><span class="text-[7px] font-black text-emerald-600">${getAmPm(it).split(' ')[1] || ''}</span></div></div>${!ot ? `<button onclick="markAttendance(${s.id}, 'out')" class="flex-1 bg-white border-2 border-orange-200 text-orange-400 rounded-lg font-black text-[9px] uppercase">MARK OUT</button>` : `<div class="flex-1 bg-indigo-50 border border-indigo-100 rounded-lg p-1.5 flex flex-col items-center"><span class="text-[6px] font-black text-indigo-400">OUT</span><div class="flex items-center w-full justify-center"><input type="time" value="${ot}" onchange="updateTime(${s.id}, this.value, 'out')"><span class="text-[7px] font-black text-indigo-600">${getAmPm(ot).split(' ')[1] || ''}</span></div></div>`}</div>` : `<div class="flex gap-2 mt-2 w-full"><button onclick="markAttendance(${s.id}, 'in')" class="flex-1 py-2 bg-emerald-500 text-white rounded-xl font-bold text-[9px]">PRESENT</button><button onclick="markAttendance(${s.id}, 'absent')" class="flex-1 py-2 bg-white border-2 border-rose-100 text-rose-500 rounded-xl font-bold text-[9px]">ABSENT</button></div>`);
-                return `<div class="bg-white border border-slate-100 rounded-2xl p-4 mb-2 shadow-sm" onclick="tryResetAttendance(${s.id}, '${date}')"><div class="flex justify-between items-start"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 text-[10px] font-black">${s.name.charAt(0)}</div><div><h3 class="text-[11px] font-black text-slate-800 uppercase leading-none">${s.name}</h3><p class="text-[9px] font-mono text-slate-400 mt-1">${s.dmId}</p></div></div>${st==='Present'?`<span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[7px] font-black uppercase tracking-tighter">PRESENT</span>`:''}</div>${act}</div>`;
+                let act = '';
+                if(!r) {
+                    act = `<div class="flex gap-1.5 w-full mt-2"><div class="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-1.5 flex items-center justify-between"><input type="time" id="inTime-${s.id}" class="time-box"><button onclick="toggleAmPm(${s.id}, 'in')" id="inAmPm-${s.id}" class="text-[9px] font-black text-indigo-600 bg-white border border-indigo-100 rounded px-1 active:scale-90">AM</button></div><button onclick="markAttend(${s.id}, 'Present')" class="px-3 bg-emerald-500 text-white rounded-lg font-black text-[9px] uppercase active:scale-95">P</button><button onclick="markAttend(${s.id}, 'Absent')" class="px-3 bg-rose-500 text-white rounded-lg font-black text-[9px] uppercase active:scale-95">A</button></div>`;
+                } else if(r.status === 'Absent') {
+                    act = `<div class="text-right w-full font-black text-rose-500 text-[10px] uppercase mt-1">ABSENT</div>`;
+                } else {
+                    act = `<div class="flex gap-1.5 w-full mt-2"><div class="flex-1 bg-emerald-50 border border-emerald-100 rounded-lg p-1.5 text-center"><span class="text-[7px] font-black text-emerald-400 block uppercase">IN</span><span class="text-[10px] font-black text-emerald-700">${r.inTime}</span></div>${!r.outTime ? `<div class="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-1.5 flex items-center justify-between"><input type="time" id="outTime-${s.id}" class="time-box"><button onclick="toggleAmPm(${s.id}, 'out')" id="outAmPm-${s.id}" class="text-[9px] font-black text-indigo-600 bg-white border border-indigo-100 rounded px-1 active:scale-90">AM</button></div><button onclick="markAttend(${s.id}, 'Out')" class="px-3 bg-orange-500 text-white rounded-lg font-black text-[9px] uppercase">OUT</button>` : `<div class="flex-1 bg-indigo-50 border border-indigo-100 rounded-lg p-1.5 text-center"><span class="text-[7px] font-black text-indigo-400 block uppercase">OUT</span><span class="text-[10px] font-black text-indigo-700">${r.outTime}</span></div>`}</div>`;
+                }
+                return `<div class="bg-white border border-slate-100 rounded-2xl p-4 mb-2 shadow-sm" onclick="tryResetAttendance(${s.id}, '${date}')"><div class="flex justify-between items-start"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 text-[10px] font-black">${s.name.charAt(0)}</div><div><h3 class="text-[11px] font-black text-slate-800 uppercase leading-none">${s.name}</h3><p class="text-[9px] font-mono text-slate-400 mt-1">${s.dmId}</p></div></div>${r?.status==='Present'?`<span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[7px] font-black uppercase">PRESENT</span>`:''}</div>${act}</div>`;
             }).join('');
         }
 
-        function renderFullList() { const list = document.getElementById('full-student-list'); const b = document.getElementById('batchFilter').value; let f = students.filter(s => b==='All' || s.batch===b); if(isNewestFirst) f = [...f].reverse(); list.innerHTML = f.map(s => `<div class="bg-white border border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-[9px] font-black uppercase">${s.name.charAt(0)}</div><h4 class="text-[10px] font-bold uppercase">${s.name}</h4></div><button onclick="requestDeleteStudent(${s.id})" class="text-red-200 hover:text-red-500 transition"><i class="fas fa-trash-alt text-xs"></i></button></div>`).join('') || '<p class="text-center text-[9px] py-4 uppercase text-slate-300 font-bold">No Records</p>'; }
-        function requestDeleteStudent(id) { pendingDeleteId = id; document.getElementById('confirm-modal').classList.remove('hidden'); document.getElementById('modal-confirm-btn').onclick = function() { students = students.filter(s=>s.id!=id); localStorage.setItem('students', JSON.stringify(students)); renderFullList(); updateStats(); closeModal(); showToast("Deleted", "success"); }; }
-        function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
-        function toggleSort() { isNewestFirst = !isNewestFirst; document.getElementById('sortText').innerText = isNewestFirst ? "New" : "Old"; renderFullList(); }
-        function updateStats() { document.getElementById('stat-total').innerText = students.length; }
-        function renderStatsPage() { document.getElementById('stat-page-total').innerText = students.length; }
-        function tryResetAttendance(id, date) { if(!clickTrackers[id]) clickTrackers[id]={c:0,t:null}; clickTrackers[id].c++; clearTimeout(clickTrackers[id].t); clickTrackers[id].t=setTimeout(()=>clickTrackers[id].c=0,500); if(clickTrackers[id].c>=3){ attendance=attendance.filter(a=>!(a.studentId===id && a.date===date)); localStorage.setItem('attendance',JSON.stringify(attendance)); renderAttendanceList(); showToast("Reset", "success"); } }
-        function downloadCSV() { let c = "ID,Name,Batch,JoinDate\n"; students.forEach(s => c += `${s.dmId},${s.name},${s.batch},${s.regDate}\n`); const l = document.createElement("a"); l.href = encodeURI("data:text/csv;charset=utf-8," + c); l.download = "students.csv"; l.click(); }
+        // --- RANKING & UTILS ---
+        function populateRankFilters() { const select = document.getElementById('rankPaperSelect'); const unique = [...new Set(marks.map(m => m.paperName))]; select.innerHTML = '<option value="Total">Total Marks</option>' + unique.map(p => `<option value="${p}">${p}</option>`).join(''); }
+        function renderRankList() { const b = document.getElementById('rankBatchFilter').value; const p = document.getElementById('rankPaperSelect').value; let data = students.filter(s => s.batch === b).map(s => { let sc = p==='Total' ? marks.filter(m=>m.studentId===s.id).reduce((sum,m)=>sum+m.score,0) : (marks.find(m=>m.studentId===s.id && m.paperName===p)?.score||0); return {...s, sc}; }).sort((a,b)=>b.sc-a.sc); document.getElementById('rank-list-container').innerHTML = data.map((s,i)=>`<div class="bg-white border p-3 rounded-xl flex justify-between items-center shadow-sm"><span class="text-[9px] font-black">#${i+1} ${s.name}</span><span class="text-xs font-black text-indigo-600">${s.sc}</span></div>`).join(''); }
+        function renderFullList() { document.getElementById('full-student-list').innerHTML = students.map(s => `<div class="bg-white border p-3 rounded-xl flex justify-between items-center shadow-sm"><h4 class="text-[10px] font-bold uppercase">${s.name}</h4><button onclick="requestDeleteStudent(${s.id})" class="text-red-300 active:scale-90"><i class="fas fa-trash-alt"></i></button></div>`).join(''); }
+        function requestDeleteStudent(id) { pendingDeleteId = id; document.getElementById('confirm-modal').classList.remove('hidden'); document.getElementById('modal-confirm-btn').onclick = function() { students=students.filter(s=>s.id!=id); localStorage.setItem('students',JSON.stringify(students)); renderFullList(); closeModal(); showToast("Deleted","success"); }; }
+        function requestHardReset() { if(confirm("Are you sure you want to delete EVERYTHING?")) { localStorage.clear(); location.reload(); } }
+        function toggleCancelClass() { const d = document.getElementById('attendPicker').value; if(cancelledDates.includes(d)) cancelledDates = cancelledDates.filter(x=>x!==d); else cancelledDates.push(d); localStorage.setItem('cancelledDates', JSON.stringify(cancelledDates)); renderAttendanceList(); }
+        function updateDayIndicator(d) { const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d).getDay()]; document.getElementById('dayIndicator').innerText = day; document.getElementById('dayIndicator').className = (day==='Mon'||day==='Fri') ? "px-2 py-1 rounded bg-indigo-600 text-[8px] font-black uppercase text-white shadow-sm" : "px-2 py-1 rounded bg-slate-200 text-[8px] font-black uppercase text-slate-500"; }
+        function tryResetAttendance(id, d) { if(!clickTrackers[id]) clickTrackers[id]={c:0,t:null}; clickTrackers[id].c++; clearTimeout(clickTrackers[id].t); clickTrackers[id].t=setTimeout(()=>{clickTrackers[id].c=0;},500); if(clickTrackers[id].c>=3){ attendance=attendance.filter(a=>!(a.studentId===id && a.date===d)); localStorage.setItem('attendance',JSON.stringify(attendance)); renderAttendanceList(); showToast("Record Reset","success"); } }
+        function downloadCSV() { let c="ID,Name,Batch,JoinDate\n"; students.forEach(s=>c+=`${s.dmId},${s.name},${s.batch},${s.regDate}\n`); const l=document.createElement('a'); l.href=encodeURI("data:text/csv;charset=utf-8,"+c); l.download="database.csv"; l.click(); }
     </script>
 </body>
 </html>
