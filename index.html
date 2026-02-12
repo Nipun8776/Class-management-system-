@@ -20,7 +20,7 @@
         input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
         
         #toast-box {
-            visibility: hidden; min-width: 220px; background-color: #333; color: #fff; text-align: center;
+            visibility: hidden; min-width: 200px; background-color: #333; color: #fff; text-align: center;
             border-radius: 50px; padding: 12px; position: fixed; z-index: 9999; left: 50%; bottom: 30px;
             transform: translateX(-50%); font-size: 11px; font-weight: bold; text-transform: uppercase;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: all 0.3s;
@@ -71,7 +71,6 @@
                 <button onclick="switchTab('marks')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-file-alt w-6"></i> Paper Marks</button>
                 <button onclick="switchTab('rank')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-trophy w-6"></i> Rankings</button>
                 <button onclick="switchTab('list')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-id-card w-6"></i> Student List</button>
-                <button onclick="switchTab('stats')" class="w-full flex items-center p-3 text-[11px] font-bold text-slate-600 rounded-xl hover:bg-indigo-50"><i class="fas fa-chart-pie w-6"></i> Statistics</button>
             </div>
         </div>
         <div class="p-5 mt-auto border-t border-slate-50">
@@ -158,9 +157,9 @@
 
         <section id="rank" class="section-tab">
             <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm max-w-sm mx-auto">
-                <h2 class="text-[10px] font-black text-indigo-900 uppercase mb-4 text-center tracking-widest">Class Rankings</h2>
+                <h2 class="text-[10px] font-black text-indigo-900 uppercase mb-4 text-center tracking-widest">Rankings</h2>
                 <div class="flex gap-1 mb-4">
-                    <select id="rankBatchFilter" onchange="renderRankList()" class="flex-1 bg-slate-50 border border-slate-200 p-2 rounded-lg text-[9px] font-black uppercase outline-none"><option value="2026">2026</option><option value="2027">2027</option></select>
+                    <select id="rankBatchFilter" onchange="renderRankList()" class="flex-1 bg-slate-50 border border-slate-200 p-2 rounded-lg text-[9px] font-black uppercase outline-none"><option value="All">All Batches</option><option value="2026">2026</option><option value="2027">2027</option></select>
                     <select id="rankPaperSelect" onchange="renderRankList()" class="flex-1 bg-slate-50 border border-slate-200 p-2 rounded-lg text-[9px] font-black uppercase outline-none"></select>
                 </div>
                 <div id="rank-list-container" class="space-y-2"></div>
@@ -182,7 +181,13 @@
 
         <section id="list" class="section-tab">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-                <div class="flex justify-between items-center mb-4"><h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Database</h2><select id="batchFilter" onchange="renderFullList()" class="bg-slate-50 border border-slate-200 text-[9px] font-bold rounded px-2 py-1 outline-none shadow-sm"><option value="All">All</option><option value="2026">2026</option><option value="2027">2027</option></select></div>
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Database</h2>
+                        <span id="list-count-display" class="text-[9px] font-black text-indigo-600 mt-0.5 block bg-indigo-50 px-2 py-0.5 rounded-full w-fit">Total: 0</span>
+                    </div>
+                    <select id="batchFilter" onchange="renderFullList()" class="bg-slate-50 border border-slate-200 text-[9px] font-bold rounded px-2 py-1 outline-none shadow-sm"><option value="All">All Batches</option><option value="2026">2026</option><option value="2027">2027</option></select>
+                </div>
                 <div id="full-student-list" class="space-y-2"></div>
             </div>
         </section>
@@ -215,6 +220,7 @@
             switchTab('home'); updateDayIndicator(today); populateRankFilters(); updateStats();
         });
 
+        // --- NAVIGATION ---
         function switchTab(id) {
             document.querySelectorAll('section.section-tab').forEach(s => s.style.display = 'none');
             const target = document.getElementById(id);
@@ -259,7 +265,7 @@
             document.getElementById('marksDirectId').value = ''; document.getElementById('marksDirectScore').value = '';
         }
 
-        // --- LOOKUP & HISTORY (BATCH DISPLAY ADDED) ---
+        // --- LOOKUP & HISTORY ---
         function lookupStudent() {
             const barcode = document.getElementById('searchId').value.trim();
             const s = students.find(x => x.dmId === barcode);
@@ -267,7 +273,7 @@
                 currentProfileId = s.id;
                 document.getElementById('studentProfile').classList.remove('hidden'); document.getElementById('searchBoxContainer').classList.add('hidden');
                 document.getElementById('resName').innerText = s.name; document.getElementById('resId').innerText = s.dmId;
-                document.getElementById('resBatch').innerText = s.batch + " BATCH"; // SHOW BATCH
+                document.getElementById('resBatch').innerText = s.batch + " BATCH"; 
                 
                 const sAttend = attendance.filter(a => a.studentId === s.id);
                 const sMarks = marks.filter(m => m.studentId === s.id);
@@ -280,7 +286,6 @@
                 }).sort((a, b) => b.total - a.total);
                 document.getElementById('resRank').innerText = "RANK #" + (batchStudents.findIndex(x => x.id === s.id) + 1);
 
-                // Populate Paper Filter for Profile
                 const uniquePapers = [...new Set(sMarks.map(m => m.paperName))];
                 const filterSelect = document.getElementById('profilePaperFilter');
                 filterSelect.innerHTML = '<option value="All">All History</option>' + uniquePapers.map(p => `<option value="${p}">${p}</option>`).join('');
@@ -301,7 +306,8 @@
             if(filter !== 'All') { allDates = allDates.filter(d => sMarks.some(m => m.date === d)); }
 
             document.getElementById('combinedHistory').innerHTML = allDates.map(date => {
-                const m = sMarks.find(mark => mark.date === date); const att = filter === 'All' ? sAttend.find(a => a.date === date) : null; 
+                const m = sMarks.find(mark => mark.date === date); 
+                const att = filter === 'All' ? sAttend.find(a => a.date === date) : null; 
                 const isAbs = att && att.status === 'Absent';
                 
                 let html = `<div class="history-card ${isAbs?'absent':(att?'present':(m?'mark':''))} flex justify-between items-center shadow-sm p-3 bg-white rounded-xl">`;
@@ -317,7 +323,6 @@
 
         function resetSearch() { document.getElementById('studentProfile').classList.add('hidden'); document.getElementById('searchBoxContainer').classList.remove('hidden'); document.getElementById('searchId').value = ''; currentProfileId = null; }
 
-        // --- ATTENDANCE & OTHER LOGIC ---
         function markAttend(id, type) {
             const date = document.getElementById('attendPicker').value;
             const idx = attendance.findIndex(a => a.studentId === id && a.date === date);
@@ -325,6 +330,7 @@
             else { attendance.push({ studentId: id, date, status: type }); } 
             localStorage.setItem('attendance', JSON.stringify(attendance)); renderAttendanceList();
         }
+        
         function toggleCancelClass() { const d = document.getElementById('attendPicker').value; if(cancelledDates.includes(d)) cancelledDates = cancelledDates.filter(x=>x!==d); else cancelledDates.push(d); localStorage.setItem('cancelledDates', JSON.stringify(cancelledDates)); renderAttendanceList(); }
         function updateDayIndicator(d) { const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d).getDay()]; document.getElementById('dayIndicator').innerText = day; if(cancelledDates.includes(d)) { document.getElementById('dayIndicator').className = "px-2 py-1 rounded bg-red-500 text-[8px] font-black uppercase text-white shadow-sm"; document.getElementById('cancelBtnText').innerText = "Cancelled"; } else { document.getElementById('dayIndicator').className = (day==='Mon'||day==='Fri') ? "px-2 py-1 rounded bg-indigo-600 text-[8px] font-black uppercase text-white shadow-sm" : "px-2 py-1 rounded bg-slate-200 text-[8px] font-black uppercase text-slate-500"; document.getElementById('cancelBtnText').innerText = "Cancel Class"; } }
 
@@ -342,20 +348,27 @@
             }).join('');
         }
 
-        // --- STATS LOGIC ---
-        function updateStats() {
-            document.getElementById('stat-total').innerText = students.length;
-            document.getElementById('stat-2026').innerText = students.filter(s => s.batch === '2026').length;
-            document.getElementById('stat-2027').innerText = students.filter(s => s.batch === '2027').length;
-        }
-
-        // --- UTILS ---
+        // --- RANKING & LIST ---
         function populateRankFilters() { const select = document.getElementById('rankPaperSelect'); const unique = [...new Set(marks.map(m => m.paperName))]; select.innerHTML = '<option value="Total">Total Marks</option>' + unique.map(p => `<option value="${p}">${p}</option>`).join(''); }
-        function renderRankList() { const b = document.getElementById('rankBatchFilter').value; const p = document.getElementById('rankPaperSelect').value; let data = students.filter(s => s.batch === b).map(s => { let sc = p==='Total' ? marks.filter(m=>m.studentId===s.id).reduce((sum,m)=>sum+m.score,0) : (marks.find(m=>m.studentId===s.id && m.paperName===p)?.score||0); return {...s, sc}; }).sort((a,b)=>b.sc-a.sc); document.getElementById('rank-list-container').innerHTML = data.map((s,i)=>`<div class="bg-white border p-3 rounded-xl flex justify-between items-center shadow-sm"><span class="text-[9px] font-black">#${i+1} ${s.name}</span><span class="text-xs font-black text-indigo-600">${s.sc}</span></div>`).join(''); }
-        function renderFullList() { document.getElementById('full-student-list').innerHTML = students.map(s => `<div class="bg-white border border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm card-animate"><h4 class="text-[11px] font-bold uppercase">${s.name}</h4><button onclick="requestDeleteStudent(${s.id})" class="text-red-300 active:scale-90 transition"><i class="fas fa-trash-alt"></i></button></div>`).join('') || '<p class="text-center py-10 text-[9px] uppercase font-bold text-slate-300">Empty List</p>'; }
+        function renderRankList() { 
+            const b = document.getElementById('rankBatchFilter').value; 
+            const p = document.getElementById('rankPaperSelect').value; 
+            let data = students.filter(s => b === 'All' ? true : s.batch === b).map(s => { 
+                let sc = p==='Total' ? marks.filter(m=>m.studentId===s.id).reduce((sum,m)=>sum+m.score,0) : (marks.find(m=>m.studentId===s.id && m.paperName===p)?.score||0); 
+                return {...s, sc}; 
+            }).sort((a,b)=>b.sc-a.sc); 
+            document.getElementById('rank-list-container').innerHTML = data.map((s,i)=>`<div class="bg-white border p-3 rounded-xl flex justify-between items-center shadow-sm"><span class="text-[9px] font-black">#${i+1} ${s.name} <span class="text-[7px] text-slate-400 ml-1">(${s.batch})</span></span><span class="text-xs font-black text-indigo-600">${s.sc}</span></div>`).join(''); 
+        }
+        function renderFullList() { 
+            const list = document.getElementById('full-student-list'); const b = document.getElementById('batchFilter').value; 
+            let f = students.filter(s => b === 'All' ? true : s.batch === b); 
+            document.getElementById('list-count-display').innerText = `Total: ${f.length}`;
+            list.innerHTML = f.map(s => `<div class="bg-white border border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm card-animate"><h4 class="text-[11px] font-bold uppercase">${s.name}</h4><button onclick="requestDeleteStudent(${s.id})" class="text-red-300 active:scale-90 transition"><i class="fas fa-trash-alt"></i></button></div>`).join('') || '<p class="text-center py-10 text-[9px] uppercase font-bold text-slate-300">Empty List</p>'; 
+        }
         function requestDeleteStudent(id) { pendingDeleteId = id; document.getElementById('confirm-modal').classList.remove('hidden'); document.getElementById('modal-confirm-btn').onclick = function() { students=students.filter(s=>s.id!=id); localStorage.setItem('students',JSON.stringify(students)); renderFullList(); updateStats(); closeModal(); showToast("Deleted","success"); }; }
         function requestHardReset() { if(confirm("Are you sure? EVERYTHING will be lost.")) { localStorage.clear(); location.reload(); } }
         function tryResetAttendance(id, d) { if(!clickTrackers[id]) clickTrackers[id]={c:0,t:null}; clickTrackers[id].c++; clearTimeout(clickTrackers[id].t); clickTrackers[id].t=setTimeout(()=>{clickTrackers[id].c=0;},500); if(clickTrackers[id].c>=3){ attendance=attendance.filter(a=>!(a.studentId===id && a.date===d)); localStorage.setItem('attendance',JSON.stringify(attendance)); renderAttendanceList(); showToast("Reset","success"); } }
+        function updateStats() { document.getElementById('stat-total').innerText = students.length; document.getElementById('stat-2026').innerText = students.filter(s => s.batch === '2026').length; document.getElementById('stat-2027').innerText = students.filter(s => s.batch === '2027').length; }
         function downloadCSV() { let c="ID,Name,Batch,JoinDate\n"; students.forEach(s=>c+=`${s.dmId},${s.name},${s.batch},${s.regDate}\n`); const l=document.createElement('a'); l.href=encodeURI("data:text/csv;charset=utf-8,"+c); l.download="database.csv"; l.click(); }
     </script>
 </body>
