@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paper Class Pro</title>
+    <title>Paper Class Pro (Online)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -34,7 +34,6 @@
         }
         #toast-box.show { visibility: visible; opacity: 1; bottom: 50px; }
         
-        /* Loading Spinner */
         #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .loader { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #4f46e5; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -54,7 +53,7 @@
 
     <div id="loading-overlay">
         <div class="loader mb-4"></div>
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Connecting...</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Connecting to Database...</p>
     </div>
 
     <div id="confirm-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -342,6 +341,23 @@
             }
         }
 
+        async function requestDeleteAttend(id) {
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-title').innerText = "REMOVE ATTENDANCE?";
+            document.getElementById('modal-confirm-btn').onclick = async function() {
+                const date = document.getElementById('attendPicker').value;
+                const { error } = await supabaseClient.from('attendance').delete().match({ student_id: id, date: date });
+                if(!error) {
+                    attendance = attendance.filter(a => !(a.student_id === id && a.date === date));
+                    renderAttendanceList();
+                    showToast("Removed Successfully!", "success");
+                } else {
+                    showToast("Error!", "error");
+                }
+                closeModal();
+            };
+        }
+
         async function saveQuickMarkDirect() {
             const barcode = document.getElementById('marksDirectId').value.trim();
             const score = parseInt(document.getElementById('marksDirectScore').value);
@@ -408,7 +424,7 @@
                 document.getElementById('studentProfile').classList.remove('hidden'); document.getElementById('searchBoxContainer').classList.add('hidden');
                 document.getElementById('resName').innerText = s.name; document.getElementById('resId').innerText = s.dm_id;
                 document.getElementById('resBatch').innerText = s.batch + " BATCH";
-                document.getElementById('resJoined').innerText = "Joined: " + s.reg_date; // Joined Date Added
+                document.getElementById('resJoined').innerText = "Joined: " + s.reg_date; 
                 
                 const sAttend = attendance.filter(a => a.student_id === s.id);
                 const sMarks = marks.filter(m => m.student_id === s.id);
@@ -477,7 +493,7 @@
             
             container.innerHTML = f.map((s, i) => { 
                 const r = attendance.find(a => a.student_id === s.id && a.date === date);
-                let act = r ? `<span class="text-[9px] font-black uppercase ${r.status==='Present'?'text-emerald-500':'text-rose-500'} tracking-widest">${r.status.substring(0,3)}</span>` : 
+                let act = r ? `<div class="flex items-center gap-2"><span class="text-[9px] font-black uppercase ${r.status==='Present'?'text-emerald-500':'text-rose-500'} tracking-widest">${r.status.substring(0,3)}</span><button onclick="requestDeleteAttend(${s.id})" class="text-[9px] text-slate-400"><i class="fas fa-edit"></i></button></div>` : 
                 `<div class="flex gap-1"><button onclick="markAttend(${s.id}, 'Present')" class="px-2 py-1 bg-emerald-500 text-white rounded text-[8px] font-bold uppercase active:scale-95 shadow-sm">P</button><button onclick="markAttend(${s.id}, 'Absent')" class="px-2 py-1 bg-white border border-rose-200 text-rose-500 rounded text-[8px] font-bold uppercase active:scale-95 shadow-sm">A</button></div>`;
                 return `<div class="bg-white border border-slate-100 rounded-xl p-3 mb-1 shadow-sm flex justify-between items-center"><div class="flex items-center gap-2"><span class="text-[10px] font-black text-slate-300 w-5">#${i+1}</span><span class="text-[9px] font-mono text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">${s.dm_id}</span><span class="text-[10px] font-black text-slate-800 uppercase">${s.name}</span></div>${act}</div>`;
             }).join('') || '<p class="text-center text-[9px] text-slate-300 py-10 uppercase">No Matches</p>';
@@ -494,7 +510,9 @@
         function populateRankFilters() { const select = document.getElementById('rankPaperSelect'); const unique = [...new Set(marks.map(m => m.paper_name))]; select.innerHTML = '<option value="Total">Total Marks</option>' + unique.map(p => `<option value="${p}">${p}</option>`).join(''); }
         function renderRankList() { 
             const b = document.getElementById('rankBatchFilter').value; const p = document.getElementById('rankPaperSelect').value; 
-            let data = students.filter(s => b === 'All' ? true : s.batch === b).map(s => { let sc = p==='Total' ? marks.filter(m=>m.student_id===s.id).reduce((sum,m)=>sum+m.score,0) : (marks.find(m=>m.student_id===s.id && m.paper_name===p)?.score||0); return {...s, sc}; }).sort((a,b)=>b.sc-a.sc); 
+            let data = students.filter(s => b === 'All' ? true : s.batch === b).map(s => { let sc = p==='Total' ? marks.filter(m=>m.student_id===s.id).reduce((sum,m)=>sum+m.score,0) : (marks.find(m=>m.student_id===s.id && m.paper_name===p)?.score||0); return {...s, sc}; });
+            if (p !== 'Total') data = data.filter(s => marks.find(m => m.student_id === s.id && m.paper_name === p)); // Fixed Filter
+            data.sort((a,b)=>b.sc-a.sc); 
             document.getElementById('rank-list-container').innerHTML = data.map((s,i)=>`<div class="bg-white border border-slate-100 p-3 rounded-xl flex justify-between items-center shadow-sm mb-1"><div class="flex items-center gap-2"><span class="text-[10px] font-black text-indigo-400 w-5">#${i+1}</span><span class="text-[9px] font-mono text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">${s.dm_id}</span><span class="text-[10px] font-black text-slate-700 uppercase">${s.name}</span></div><span class="text-xs font-black text-indigo-600">${s.sc}</span></div>`).join(''); 
         }
 
